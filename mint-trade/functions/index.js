@@ -9,6 +9,9 @@ const db = admin.firestore();
 // Import wallet functions
 const walletFunctions = require('./walletFunctions');
 
+// Import Zeepay integration
+const zeepayIntegration = require('./zeepayIntegration');
+
 // GSE API endpoint
 const GSE_API_URL = 'https://dev.kwayisi.org/apis/gse/live';
 
@@ -293,3 +296,9 @@ exports.generateVirtualAccount = walletFunctions.generateVirtualAccount;
 exports.sendMoney = walletFunctions.sendMoney;
 exports.payBill = walletFunctions.payBill;
 exports.getWalletAnalytics = walletFunctions.getWalletAnalytics;
+
+// Export Zeepay functions
+exports.zeepayInitiatePayment = zeepayIntegration.zeepayInitiatePayment;
+exports.zeepayVerifyPayment = zeepayIntegration.zeepayVerifyPayment;
+exports.zeepayWebhook = zeepayIntegration.zeepayWebhook;
+exports.getPaymentMethods = zeepayIntegration.getPaymentMethods;

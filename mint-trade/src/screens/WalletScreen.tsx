@@ -12,6 +12,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { WalletService } from '../services/walletService';
 import { Wallet, WalletTransaction } from '../types/wallet';
+import { AddMoneyScreen } from './AddMoneyScreen';
+import { SendMoneyScreen } from './SendMoneyScreen';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -23,6 +25,8 @@ export const WalletScreen: React.FC = () => {
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAddMoney, setShowAddMoney] = useState(false);
+  const [showSendMoney, setShowSendMoney] = useState(false);
 
   const walletService = WalletService.getInstance();
 
@@ -136,7 +140,7 @@ export const WalletScreen: React.FC = () => {
       <View style={styles.actionsGrid}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => Alert.alert('Add Money', 'Add money feature coming soon!')}
+          onPress={() => setShowAddMoney(true)}
         >
           <Text style={styles.actionIcon}>💳</Text>
           <Text style={styles.actionText}>Add Money</Text>
@@ -144,7 +148,7 @@ export const WalletScreen: React.FC = () => {
         
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => Alert.alert('Send Money', 'Send money feature coming soon!')}
+          onPress={() => setShowSendMoney(true)}
         >
           <Text style={styles.actionIcon}>📤</Text>
           <Text style={styles.actionText}>Send Money</Text>
@@ -224,6 +228,18 @@ export const WalletScreen: React.FC = () => {
       )}
     </View>
   );
+
+  if (showAddMoney) {
+    return (
+      <AddMoneyScreen onClose={() => setShowAddMoney(false)} />
+    );
+  }
+
+  if (showSendMoney) {
+    return (
+      <SendMoneyScreen onClose={() => setShowSendMoney(false)} />
+    );
+  }
 
   if (loading) {
     return (
