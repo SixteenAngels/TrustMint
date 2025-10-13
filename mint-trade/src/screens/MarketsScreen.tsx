@@ -12,6 +12,7 @@ import {
 import { StockService } from '../services/stockService';
 import { Stock } from '../types';
 import { StockList } from '../components/StockList';
+import { StockDetailScreen } from './StockDetailScreen';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -26,6 +27,7 @@ export const MarketsScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedStock, setSelectedStock] = useState<string | null>(null);
 
   const stockService = StockService.getInstance();
 
@@ -199,6 +201,15 @@ export const MarketsScreen: React.FC = () => {
     );
   }
 
+  if (selectedStock) {
+    return (
+      <StockDetailScreen
+        symbol={selectedStock}
+        onClose={() => setSelectedStock(null)}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -221,8 +232,7 @@ export const MarketsScreen: React.FC = () => {
         <StockList
           stocks={filteredStocks}
           onStockPress={(stock) => {
-            // Navigate to stock detail
-            Alert.alert('Stock Detail', `Opening details for ${stock.symbol}`);
+            setSelectedStock(stock.symbol);
           }}
         />
       </View>
