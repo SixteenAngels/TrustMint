@@ -18,6 +18,8 @@ import { P2PPaymentScreen } from './P2PPaymentScreen';
 import { BillPaymentScreen } from './BillPaymentScreen';
 import { AutoSaveScreen } from './AutoSaveScreen';
 import { InvestmentVaultsScreen } from './InvestmentVaultsScreen';
+import { KYCVerificationScreen } from './KYCVerificationScreen';
+import { BankingDashboardScreen } from './BankingDashboardScreen';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -35,6 +37,8 @@ export const WalletScreen: React.FC = () => {
   const [showBillPayment, setShowBillPayment] = useState(false);
   const [showAutoSave, setShowAutoSave] = useState(false);
   const [showInvestmentVaults, setShowInvestmentVaults] = useState(false);
+  const [showKYC, setShowKYC] = useState(false);
+  const [showBankingDashboard, setShowBankingDashboard] = useState(false);
 
   const walletService = WalletService.getInstance();
 
@@ -193,6 +197,22 @@ export const WalletScreen: React.FC = () => {
           <Text style={styles.actionIcon}>🏦</Text>
           <Text style={styles.actionText}>Vaults</Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowKYC(true)}
+        >
+          <Text style={styles.actionIcon}>🆔</Text>
+          <Text style={styles.actionText}>KYC</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowBankingDashboard(true)}
+        >
+          <Text style={styles.actionIcon}>📊</Text>
+          <Text style={styles.actionText}>Banking</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -286,6 +306,18 @@ export const WalletScreen: React.FC = () => {
   if (showInvestmentVaults) {
     return (
       <InvestmentVaultsScreen />
+    );
+  }
+
+  if (showKYC) {
+    return (
+      <KYCVerificationScreen />
+    );
+  }
+
+  if (showBankingDashboard) {
+    return (
+      <BankingDashboardScreen />
     );
   }
 
