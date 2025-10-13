@@ -9,8 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
@@ -97,33 +102,49 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.title}>Welcome to Mint Trade</Text>
-      <Text style={styles.subtitle}>Ghana's Smart Stock Trading App</Text>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Phone Number</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="+233XXXXXXXXX"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
-          autoFocus
-        />
-        <Text style={styles.helperText}>
-          We'll send you a verification code
-        </Text>
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoEmoji}>💹</Text>
+        </View>
+        <Text style={styles.title}>Welcome to Mint Trade</Text>
+        <Text style={styles.subtitle}>Ghana's Smart Stock Trading App</Text>
       </View>
+      
+      <View style={styles.formContainer}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Phone Number</Text>
+          <View style={styles.phoneInputContainer}>
+            <View style={styles.countryCode}>
+              <Text style={styles.countryCodeText}>🇬🇭 +233</Text>
+            </View>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="XXXXXXXXX"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              autoFocus
+            />
+          </View>
+          <Text style={styles.helperText}>
+            We'll send you a verification code to secure your account
+          </Text>
+        </View>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleSendOTP}
-        disabled={loading || !phoneNumber}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Sending...' : 'Send OTP'}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            loading && styles.buttonDisabled,
+            !phoneNumber && styles.buttonDisabled
+          ]}
+          onPress={handleSendOTP}
+          disabled={loading || !phoneNumber}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'Sending OTP...' : 'Send Verification Code'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -255,85 +276,135 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing.lg,
   },
   stepContainer: {
     flex: 1,
     justifyContent: 'center',
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xxxl,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  logoEmoji: {
+    fontSize: 32,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...typography.h2,
+    color: colors.textPrimary,
     textAlign: 'center',
-    color: '#1a1a1a',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    ...typography.bodyLarge,
+    color: colors.textSecondary,
     textAlign: 'center',
-    color: '#666',
-    marginBottom: 40,
+  },
+  formContainer: {
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 20,
+    padding: spacing.xl,
+    ...shadows.card,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   label: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundSecondary,
+    overflow: 'hidden',
+  },
+  countryCode: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+  },
+  countryCodeText: {
+    ...typography.bodyMedium,
+    color: colors.primary,
+  },
+  phoneInput: {
+    flex: 1,
+    padding: spacing.md,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: colors.textPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 12,
-    padding: 16,
+    padding: spacing.md,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundSecondary,
+    color: colors.textPrimary,
   },
   helperText: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 12,
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
-    marginTop: 20,
+    ...shadows.button,
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.border,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
+    color: colors.textWhite,
   },
   linkButton: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   linkText: {
-    color: '#007AFF',
-    fontSize: 16,
+    ...typography.bodyMedium,
+    color: colors.primary,
   },
   welcomeContainer: {
-    backgroundColor: '#e8f5e8',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 20,
+    backgroundColor: colors.successLight,
+    padding: spacing.lg,
+    borderRadius: 16,
+    marginTop: spacing.lg,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.success,
   },
   welcomeText: {
-    color: '#2d5a2d',
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.bodyMedium,
+    color: colors.success,
+    textAlign: 'center',
   },
 });

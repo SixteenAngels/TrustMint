@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Animated,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { StockService } from '../services/stockService';
@@ -14,6 +15,12 @@ import { Stock, PortfolioItem } from '../types';
 import { PortfolioCard } from '../components/PortfolioCard';
 import { StockList } from '../components/StockList';
 import { QuickActions } from '../components/QuickActions';
+import { HeroSection } from '../components/HeroSection';
+import { MarketTicker } from '../components/MarketTicker';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
 export const DashboardScreen: React.FC = () => {
   const { user } = useAuth();
@@ -93,20 +100,18 @@ export const DashboardScreen: React.FC = () => {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
       }
+      showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.name || 'Trader'}!</Text>
-        <Text style={styles.subtitle}>Ready to trade smart?</Text>
-      </View>
-
-      {/* Portfolio Overview */}
-      <PortfolioCard
-        totalValue={calculateTotalValue()}
+      {/* Hero Section */}
+      <HeroSection
+        userName={user?.name || 'Trader'}
+        portfolioValue={calculateTotalValue()}
         dayGain={calculateDayGain()}
         dayGainPercent={calculateDayGainPercent()}
-        balance={user?.balance || 0}
       />
+
+      {/* Live Market Ticker */}
+      <MarketTicker stocks={stocks.slice(0, 6)} />
 
       {/* Quick Actions */}
       <QuickActions />
@@ -115,8 +120,9 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Top Movers</Text>
-          <TouchableOpacity>
+          <TouchableOpacity style={styles.seeAllButton}>
             <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllArrow}>→</Text>
           </TouchableOpacity>
         </View>
         <StockList
@@ -132,8 +138,9 @@ export const DashboardScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Portfolio</Text>
-            <TouchableOpacity>
+            <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>View All</Text>
+              <Text style={styles.seeAllArrow}>→</Text>
             </TouchableOpacity>
           </View>
           <StockList
@@ -157,14 +164,18 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Market Overview</Text>
-          <TouchableOpacity>
+          <TouchableOpacity style={styles.seeAllButton}>
             <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllArrow}>→</Text>
           </TouchableOpacity>
         </View>
         <StockList
           stocks={stocks.slice(0, 10)}
         />
       </View>
+
+      {/* Bottom spacing for tab bar */}
+      <View style={styles.bottomSpacing} />
     </ScrollView>
   );
 };
@@ -172,7 +183,7 @@ export const DashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -180,44 +191,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 4,
+    ...typography.body,
+    color: colors.textSecondary,
   },
   section: {
-    marginTop: 20,
-    backgroundColor: '#fff',
-    paddingVertical: 16,
+    backgroundColor: colors.backgroundSecondary,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: 16,
+    paddingVertical: spacing.lg,
+    ...shadows.card,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
+    ...typography.h5,
+    color: colors.textPrimary,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   seeAllText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
+    ...typography.bodyMedium,
+    color: colors.primary,
+    marginRight: spacing.xs,
+  },
+  seeAllArrow: {
+    ...typography.bodyMedium,
+    color: colors.primary,
+  },
+  bottomSpacing: {
+    height: 100, // Space for tab bar
   },
 });

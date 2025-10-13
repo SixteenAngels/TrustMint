@@ -2,19 +2,28 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text } from 'react-native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { SplashScreen } from './src/screens/SplashScreen';
+import { WelcomeSlidesScreen } from './src/screens/WelcomeSlidesScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
+import { MarketsScreen } from './src/screens/MarketsScreen';
 import { TradingScreen } from './src/screens/TradingScreen';
 import { LearningScreen } from './src/screens/LearningScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { AdminScreen } from './src/screens/AdminScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { PortfolioScreen } from './src/screens/PortfolioScreen';
 import { BottomTabNavigator } from './src/components/BottomTabNavigator';
+import { colors } from './src/styles/colors';
+import { typography } from './src/styles/typography';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showTrading, setShowTrading] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [showSplash, setShowSplash] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const handleTabPress = (tabId: string) => {
     if (tabId === 'trading') {
@@ -38,16 +47,34 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardScreen />;
+      case 'trading':
+        return <MarketsScreen />;
+      case 'portfolio':
+        return <PortfolioScreen />;
       case 'learning':
         return <LearningScreen />;
       case 'notifications':
         return <NotificationsScreen />;
       case 'admin':
-        return <AdminScreen />;
+        return <ProfileScreen />;
       default:
         return <DashboardScreen />;
     }
   };
+
+  // Show splash screen first
+  if (showSplash) {
+    return (
+      <SplashScreen onAnimationComplete={() => setShowSplash(false)} />
+    );
+  }
+
+  // Show welcome slides for new users
+  if (showWelcome && !user) {
+    return (
+      <WelcomeSlidesScreen onComplete={() => setShowWelcome(false)} />
+    );
+  }
 
   if (loading) {
     return (
@@ -61,7 +88,7 @@ const AppContent: React.FC = () => {
   if (!user) {
     return (
       <View style={styles.container}>
-        <OnboardingScreen onComplete={() => {}} />
+        <OnboardingScreen onComplete={() => setShowWelcome(true)} />
         <StatusBar style="auto" />
       </View>
     );
@@ -92,16 +119,16 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    fontSize: 18,
-    color: '#666',
+    ...typography.bodyLarge,
+    color: colors.textSecondary,
   },
 });

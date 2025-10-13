@@ -1,5 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
 interface TabItem {
   id: string;
@@ -15,10 +19,11 @@ interface BottomTabNavigatorProps {
 
 const tabs: TabItem[] = [
   { id: 'dashboard', title: 'Home', icon: '🏠', screen: 'DashboardScreen' },
-  { id: 'trading', title: 'Trade', icon: '📈', screen: 'TradingScreen' },
+  { id: 'trading', title: 'Markets', icon: '📈', screen: 'TradingScreen' },
+  { id: 'portfolio', title: 'Portfolio', icon: '💼', screen: 'PortfolioScreen' },
   { id: 'learning', title: 'Learn', icon: '📚', screen: 'LearningScreen' },
   { id: 'notifications', title: 'Alerts', icon: '🔔', screen: 'NotificationsScreen' },
-  { id: 'admin', title: 'Admin', icon: '⚙️', screen: 'AdminScreen' },
+  { id: 'admin', title: 'Profile', icon: '👤', screen: 'ProfileScreen' },
 ];
 
 export const BottomTabNavigator: React.FC<BottomTabNavigatorProps> = ({
@@ -49,31 +54,34 @@ export const BottomTabNavigator: React.FC<BottomTabNavigatorProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundSecondary,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingBottom: 20,
-    paddingTop: 8,
+    borderTopColor: colors.border,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.sm,
+    ...shadows.header,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
+    borderRadius: 12,
+    marginHorizontal: spacing.xs,
   },
   activeTab: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: colors.primaryLight,
   },
   tabIcon: {
-    fontSize: 20,
-    marginBottom: 4,
+    fontSize: 22,
+    marginBottom: spacing.xs,
   },
   tabText: {
-    fontSize: 12,
-    color: '#666',
+    ...typography.caption,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontWeight: '600',
   },
 });

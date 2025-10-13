@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Stock } from '../types';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { getStatusColor, getStatusBackground } from '../styles/colors';
 
 interface StockListProps {
   stocks: Stock[];
@@ -27,6 +31,8 @@ export const StockList: React.FC<StockListProps> = ({
   const renderStockItem = (stock: Stock, index: number) => {
     const quantity = quantities[index] || 0;
     const isPositive = stock.change >= 0;
+    const statusColor = getStatusColor(isPositive);
+    const statusBackground = getStatusBackground(isPositive);
     
     return (
       <TouchableOpacity
@@ -38,7 +44,9 @@ export const StockList: React.FC<StockListProps> = ({
           <View style={styles.stockHeader}>
             <Text style={styles.stockSymbol}>{stock.symbol}</Text>
             {showQuantity && quantity > 0 && (
-              <Text style={styles.quantity}>{quantity} shares</Text>
+              <View style={styles.quantityBadge}>
+                <Text style={styles.quantityText}>{quantity} shares</Text>
+              </View>
             )}
           </View>
           <Text style={styles.stockName} numberOfLines={1}>
@@ -48,18 +56,9 @@ export const StockList: React.FC<StockListProps> = ({
         
         <View style={styles.stockPrice}>
           <Text style={styles.price}>{formatCurrency(stock.price)}</Text>
-          <View style={styles.changeContainer}>
-            <Text style={[
-              styles.change,
-              { color: isPositive ? '#34C759' : '#FF3B30' }
-            ]}>
+          <View style={[styles.changeContainer, { backgroundColor: statusBackground }]}>
+            <Text style={[styles.change, { color: statusColor }]}>
               {formatPercent(stock.changePercent)}
-            </Text>
-            <Text style={[
-              styles.changeAmount,
-              { color: isPositive ? '#34C759' : '#FF3B30' }
-            ]}>
-              {formatCurrency(Math.abs(stock.change))}
             </Text>
           </View>
         </View>
@@ -84,71 +83,71 @@ export const StockList: React.FC<StockListProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundSecondary,
   },
   stockItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   stockInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   stockHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   stockSymbol: {
-    fontSize: 16,
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
     fontWeight: '600',
-    color: '#1a1a1a',
   },
-  quantity: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+  quantityBadge: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
+  },
+  quantityText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '500',
   },
   stockName: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
   stockPrice: {
     alignItems: 'flex-end',
   },
   price: {
-    fontSize: 16,
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
     fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   changeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
   },
   change: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginRight: 4,
-  },
-  changeAmount: {
-    fontSize: 12,
+    ...typography.captionMedium,
+    fontWeight: '600',
   },
   emptyContainer: {
-    padding: 40,
+    padding: spacing.xxxl,
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: colors.textSecondary,
   },
 });

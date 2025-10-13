@@ -1,5 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
 interface QuickActionsProps {
   onTradePress?: () => void;
@@ -17,30 +21,30 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   const actions = [
     {
       id: 'trade',
-      title: 'Trade',
+      title: 'Buy Stocks',
       icon: '📈',
-      color: '#007AFF',
+      color: colors.primary,
       onPress: onTradePress,
     },
     {
       id: 'learn',
       title: 'Learn',
       icon: '📚',
-      color: '#34C759',
+      color: colors.accent,
       onPress: onLearnPress,
     },
     {
       id: 'portfolio',
       title: 'Portfolio',
       icon: '💼',
-      color: '#FF9500',
+      color: colors.success,
       onPress: onPortfolioPress,
     },
     {
       id: 'alerts',
       title: 'Alerts',
       icon: '🔔',
-      color: '#FF3B30',
+      color: colors.warning,
       onPress: onAlertsPress,
     },
   ];
@@ -66,21 +70,17 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    margin: 20,
-    padding: 20,
+    backgroundColor: colors.backgroundSecondary,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadows.card,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 16,
+    ...typography.h5,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -90,18 +90,20 @@ const styles = StyleSheet.create({
   actionButton: {
     width: '48%',
     aspectRatio: 1.5,
-    borderRadius: 12,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
+    ...shadows.button,
   },
   actionIcon: {
-    fontSize: 24,
-    marginBottom: 8,
+    fontSize: 28,
+    marginBottom: spacing.sm,
   },
   actionTitle: {
-    fontSize: 14,
+    ...typography.bodyMedium,
+    color: colors.textWhite,
     fontWeight: '600',
-    color: '#fff',
+    textAlign: 'center',
   },
 });
