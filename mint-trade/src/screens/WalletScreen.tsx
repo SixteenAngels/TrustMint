@@ -14,6 +14,8 @@ import { WalletService } from '../services/walletService';
 import { Wallet, WalletTransaction } from '../types/wallet';
 import { AddMoneyScreen } from './AddMoneyScreen';
 import { SendMoneyScreen } from './SendMoneyScreen';
+import { P2PPaymentScreen } from './P2PPaymentScreen';
+import { BillPaymentScreen } from './BillPaymentScreen';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -27,6 +29,8 @@ export const WalletScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showSendMoney, setShowSendMoney] = useState(false);
+  const [showP2P, setShowP2P] = useState(false);
+  const [showBillPayment, setShowBillPayment] = useState(false);
 
   const walletService = WalletService.getInstance();
 
@@ -156,7 +160,7 @@ export const WalletScreen: React.FC = () => {
         
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => Alert.alert('Pay Bills', 'Pay bills feature coming soon!')}
+          onPress={() => setShowBillPayment(true)}
         >
           <Text style={styles.actionIcon}>📄</Text>
           <Text style={styles.actionText}>Pay Bills</Text>
@@ -164,10 +168,10 @@ export const WalletScreen: React.FC = () => {
         
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => Alert.alert('Withdraw', 'Withdraw feature coming soon!')}
+          onPress={() => setShowP2P(true)}
         >
-          <Text style={styles.actionIcon}>🏦</Text>
-          <Text style={styles.actionText}>Withdraw</Text>
+          <Text style={styles.actionIcon}>👥</Text>
+          <Text style={styles.actionText}>P2P Pay</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -238,6 +242,18 @@ export const WalletScreen: React.FC = () => {
   if (showSendMoney) {
     return (
       <SendMoneyScreen onClose={() => setShowSendMoney(false)} />
+    );
+  }
+
+  if (showP2P) {
+    return (
+      <P2PPaymentScreen />
+    );
+  }
+
+  if (showBillPayment) {
+    return (
+      <BillPaymentScreen />
     );
   }
 
