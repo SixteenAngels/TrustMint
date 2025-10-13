@@ -16,6 +16,8 @@ import { AddMoneyScreen } from './AddMoneyScreen';
 import { SendMoneyScreen } from './SendMoneyScreen';
 import { P2PPaymentScreen } from './P2PPaymentScreen';
 import { BillPaymentScreen } from './BillPaymentScreen';
+import { AutoSaveScreen } from './AutoSaveScreen';
+import { InvestmentVaultsScreen } from './InvestmentVaultsScreen';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -31,6 +33,8 @@ export const WalletScreen: React.FC = () => {
   const [showSendMoney, setShowSendMoney] = useState(false);
   const [showP2P, setShowP2P] = useState(false);
   const [showBillPayment, setShowBillPayment] = useState(false);
+  const [showAutoSave, setShowAutoSave] = useState(false);
+  const [showInvestmentVaults, setShowInvestmentVaults] = useState(false);
 
   const walletService = WalletService.getInstance();
 
@@ -173,6 +177,22 @@ export const WalletScreen: React.FC = () => {
           <Text style={styles.actionIcon}>👥</Text>
           <Text style={styles.actionText}>P2P Pay</Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowAutoSave(true)}
+        >
+          <Text style={styles.actionIcon}>💰</Text>
+          <Text style={styles.actionText}>Auto-Save</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowInvestmentVaults(true)}
+        >
+          <Text style={styles.actionIcon}>🏦</Text>
+          <Text style={styles.actionText}>Vaults</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -254,6 +274,18 @@ export const WalletScreen: React.FC = () => {
   if (showBillPayment) {
     return (
       <BillPaymentScreen />
+    );
+  }
+
+  if (showAutoSave) {
+    return (
+      <AutoSaveScreen />
+    );
+  }
+
+  if (showInvestmentVaults) {
+    return (
+      <InvestmentVaultsScreen />
     );
   }
 
