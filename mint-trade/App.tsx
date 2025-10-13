@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text } from 'react-native';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { WalletProvider } from './src/contexts/WalletContext';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { WelcomeSlidesScreen } from './src/screens/WelcomeSlidesScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -13,6 +14,7 @@ import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { PortfolioScreen } from './src/screens/PortfolioScreen';
+import { WalletScreen } from './src/screens/WalletScreen';
 import { BottomTabNavigator } from './src/components/BottomTabNavigator';
 import { colors } from './src/styles/colors';
 import { typography } from './src/styles/typography';
@@ -57,6 +59,8 @@ const AppContent: React.FC = () => {
         return <NotificationsScreen />;
       case 'admin':
         return <ProfileScreen />;
+      case 'wallet':
+        return <WalletScreen />;
       default:
         return <DashboardScreen />;
     }
@@ -111,7 +115,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <WalletProvider>
+        <AppContent />
+      </WalletProvider>
     </AuthProvider>
   );
 }

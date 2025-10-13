@@ -17,6 +17,8 @@ import { StockList } from '../components/StockList';
 import { QuickActions } from '../components/QuickActions';
 import { HeroSection } from '../components/HeroSection';
 import { MarketTicker } from '../components/MarketTicker';
+import { WalletCard } from '../components/WalletCard';
+import { useWallet } from '../contexts/WalletContext';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -24,6 +26,7 @@ import { shadows } from '../styles/shadows';
 
 export const DashboardScreen: React.FC = () => {
   const { user } = useAuth();
+  const { wallet } = useWallet();
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -109,6 +112,17 @@ export const DashboardScreen: React.FC = () => {
         dayGain={calculateDayGain()}
         dayGainPercent={calculateDayGainPercent()}
       />
+
+      {/* Wallet Card */}
+      {wallet && (
+        <WalletCard
+          wallet={wallet}
+          onPress={() => {
+            // Navigate to wallet screen
+            // This would be handled by the parent component
+          }}
+        />
+      )}
 
       {/* Live Market Ticker */}
       <MarketTicker stocks={stocks.slice(0, 6)} />

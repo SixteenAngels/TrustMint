@@ -6,6 +6,9 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+// Import wallet functions
+const walletFunctions = require('./walletFunctions');
+
 // GSE API endpoint
 const GSE_API_URL = 'https://dev.kwayisi.org/apis/gse/live';
 
@@ -283,3 +286,10 @@ exports.cleanupOldData = functions.pubsub.schedule('every 24 hours').onRun(async
     return null;
   }
 });
+
+// Export wallet functions
+exports.createWallet = walletFunctions.createWallet;
+exports.generateVirtualAccount = walletFunctions.generateVirtualAccount;
+exports.sendMoney = walletFunctions.sendMoney;
+exports.payBill = walletFunctions.payBill;
+exports.getWalletAnalytics = walletFunctions.getWalletAnalytics;
