@@ -15,6 +15,7 @@ import { AdminScreen } from './src/screens/AdminScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { PortfolioScreen } from './src/screens/PortfolioScreen';
 import { WalletScreen } from './src/screens/WalletScreen';
+import { SocialTradingScreen } from './src/screens/SocialTradingScreen';
 import { BottomTabNavigator } from './src/components/BottomTabNavigator';
 import { colors } from './src/styles/colors';
 import { typography } from './src/styles/typography';
@@ -61,6 +62,8 @@ const AppContent: React.FC = () => {
         return <ProfileScreen />;
       case 'wallet':
         return <WalletScreen />;
+      case 'social':
+        return <SocialTradingScreen />;
       default:
         return <DashboardScreen />;
     }

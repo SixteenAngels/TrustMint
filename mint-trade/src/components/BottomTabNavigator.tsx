@@ -21,6 +21,7 @@ const tabs: TabItem[] = [
   { id: 'dashboard', title: 'Home', icon: '🏠', screen: 'DashboardScreen' },
   { id: 'wallet', title: 'Wallet', icon: '💳', screen: 'WalletScreen' },
   { id: 'trading', title: 'Markets', icon: '📈', screen: 'TradingScreen' },
+  { id: 'social', title: 'Social', icon: '👥', screen: 'SocialTradingScreen' },
   { id: 'portfolio', title: 'Portfolio', icon: '💼', screen: 'PortfolioScreen' },
   { id: 'learning', title: 'Learn', icon: '📚', screen: 'LearningScreen' },
   { id: 'notifications', title: 'Alerts', icon: '🔔', screen: 'NotificationsScreen' },
