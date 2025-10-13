@@ -13,6 +13,7 @@ import { StockService } from '../services/stockService';
 import { Stock } from '../types';
 import { StockList } from '../components/StockList';
 import { StockDetailScreen } from './StockDetailScreen';
+import { SFSymbol } from '../components/SFSymbols';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -214,8 +215,17 @@ export const MarketsScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Markets</Text>
-        <Text style={styles.subtitle}>Ghana Stock Exchange</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Markets</Text>
+          <Text style={styles.subtitle}>Ghana Stock Exchange</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={() => Alert.alert('AI Insights', 'Navigate to AI Insights')}
+        >
+          <SFSymbol name="brain.head.profile" size={20} color={colors.textWhite} />
+          <Text style={styles.aiButtonText}>AI</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -263,10 +273,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingTop: spacing.xxxl,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
     backgroundColor: colors.backgroundSecondary,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  aiButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+  },
+  aiButtonText: {
+    ...typography.caption,
+    color: colors.textWhite,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   },
   title: {
     ...typography.h2,

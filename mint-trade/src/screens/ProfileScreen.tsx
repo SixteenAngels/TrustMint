@@ -61,6 +61,35 @@ export const ProfileScreen: React.FC = () => {
     </View>
   );
 
+  const renderQuickAccess = () => (
+    <View style={styles.quickAccessSection}>
+      <Text style={styles.quickAccessTitle}>Quick Access</Text>
+      <View style={styles.quickAccessGrid}>
+        <TouchableOpacity
+          style={styles.quickAccessItem}
+          onPress={() => Alert.alert('Social Trading', 'Navigate to social trading')}
+        >
+          <Text style={styles.quickAccessIcon}>👥</Text>
+          <Text style={styles.quickAccessText}>Social</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.quickAccessItem}
+          onPress={() => Alert.alert('Learning', 'Navigate to learning center')}
+        >
+          <Text style={styles.quickAccessIcon}>📚</Text>
+          <Text style={styles.quickAccessText}>Learn</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.quickAccessItem}
+          onPress={() => Alert.alert('Notifications', 'Manage notifications')}
+        >
+          <Text style={styles.quickAccessIcon}>🔔</Text>
+          <Text style={styles.quickAccessText}>Alerts</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   const renderMenuSection = (title: string, items: any[]) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -174,25 +203,22 @@ export const ProfileScreen: React.FC = () => {
       {/* Profile Header */}
       {renderProfileHeader()}
 
+      {/* Quick Access */}
+      {renderQuickAccess()}
+
       {/* Account Section */}
       {renderMenuSection('Account', accountItems)}
 
       {/* Settings Section */}
       {renderMenuSection('Settings', settingsItems)}
 
-      {/* More Features Section */}
-      {renderMenuSection('More Features', [
+      {/* Trading & Learning Section */}
+      {renderMenuSection('Trading & Learning', [
         {
           icon: '👥',
           title: 'Social Trading',
           subtitle: 'Connect with other traders',
           onPress: () => Alert.alert('Social Trading', 'Navigate to social trading'),
-        },
-        {
-          icon: '🤖',
-          title: 'AI Insights',
-          subtitle: 'Get smart investment advice',
-          onPress: () => Alert.alert('AI Insights', 'Navigate to AI insights'),
         },
         {
           icon: '📚',
@@ -379,5 +405,36 @@ const styles = StyleSheet.create({
   versionText: {
     ...typography.caption,
     color: colors.textLight,
+  },
+  quickAccessSection: {
+    backgroundColor: colors.backgroundSecondary,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: 16,
+    padding: spacing.lg,
+    ...shadows.card,
+  },
+  quickAccessTitle: {
+    ...typography.h6,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  quickAccessGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  quickAccessItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickAccessIcon: {
+    fontSize: 24,
+    marginBottom: spacing.xs,
+  },
+  quickAccessText: {
+    ...typography.caption,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
 });

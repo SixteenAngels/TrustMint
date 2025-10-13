@@ -33,38 +33,6 @@ interface QuickActionsMenuProps {
 
 const quickActions: QuickAction[] = [
   {
-    id: 'social',
-    title: 'Social Trading',
-    subtitle: 'Connect with other traders',
-    icon: 'person.2',
-    color: colors.primary,
-    onPress: () => {},
-  },
-  {
-    id: 'ai',
-    title: 'AI Insights',
-    subtitle: 'Get smart investment advice',
-    icon: 'brain.head.profile',
-    color: colors.success,
-    onPress: () => {},
-  },
-  {
-    id: 'learning',
-    title: 'Learn',
-    subtitle: 'Educational content & courses',
-    icon: 'book',
-    color: colors.warning,
-    onPress: () => {},
-  },
-  {
-    id: 'notifications',
-    title: 'Alerts',
-    subtitle: 'Price alerts & notifications',
-    icon: 'bell',
-    color: colors.error,
-    onPress: () => {},
-  },
-  {
     id: 'auto_save',
     title: 'Auto-Save',
     subtitle: 'Automatic savings features',
@@ -126,28 +94,9 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trading & Investment</Text>
-            <View style={styles.actionsGrid}>
-              {quickActions.slice(0, 4).map((action) => (
-                <TouchableOpacity
-                  key={action.id}
-                  style={styles.actionCard}
-                  onPress={() => handleActionPress(action.id)}
-                >
-                  <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-                    <SFSymbol name={action.icon} size={24} color={colors.textWhite} />
-                  </View>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Banking & Finance</Text>
             <View style={styles.actionsGrid}>
-              {quickActions.slice(4, 8).map((action) => (
+              {quickActions.map((action) => (
                 <TouchableOpacity
                   key={action.id}
                   style={styles.actionCard}
