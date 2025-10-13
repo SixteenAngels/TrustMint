@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { SFSymbol } from '../components/SFSymbols';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -74,7 +75,12 @@ export const ProfileScreen: React.FC = () => {
         >
           <View style={styles.menuItemLeft}>
             <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuText}>{item.title}</Text>
+              {item.subtitle && (
+                <Text style={styles.menuSubtext}>{item.subtitle}</Text>
+              )}
+            </View>
           </View>
           {item.rightComponent || (
             <Text style={styles.menuArrow}>›</Text>
@@ -173,6 +179,34 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Settings Section */}
       {renderMenuSection('Settings', settingsItems)}
+
+      {/* More Features Section */}
+      {renderMenuSection('More Features', [
+        {
+          icon: '👥',
+          title: 'Social Trading',
+          subtitle: 'Connect with other traders',
+          onPress: () => Alert.alert('Social Trading', 'Navigate to social trading'),
+        },
+        {
+          icon: '🤖',
+          title: 'AI Insights',
+          subtitle: 'Get smart investment advice',
+          onPress: () => Alert.alert('AI Insights', 'Navigate to AI insights'),
+        },
+        {
+          icon: '📚',
+          title: 'Learning Center',
+          subtitle: 'Educational content & courses',
+          onPress: () => Alert.alert('Learning', 'Navigate to learning center'),
+        },
+        {
+          icon: '🔔',
+          title: 'Notifications',
+          subtitle: 'Price alerts & notifications',
+          onPress: () => Alert.alert('Notifications', 'Manage notifications'),
+        },
+      ])}
 
       {/* Support Section */}
       {renderMenuSection('Support', supportItems)}
@@ -293,6 +327,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },
+  menuTextContainer: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  menuSubtext: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   menuIcon: {
     fontSize: 20,

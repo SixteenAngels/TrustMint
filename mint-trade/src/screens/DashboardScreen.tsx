@@ -19,6 +19,8 @@ import { HeroSection } from '../components/HeroSection';
 import { MarketTicker } from '../components/MarketTicker';
 import { WalletCard } from '../components/WalletCard';
 import { useWallet } from '../contexts/WalletContext';
+import { QuickActionsMenu } from '../components/QuickActionsMenu';
+import { SFSymbol } from '../components/SFSymbols';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -31,6 +33,7 @@ export const DashboardScreen: React.FC = () => {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const stockService = StockService.getInstance();
 
@@ -98,20 +101,35 @@ export const DashboardScreen: React.FC = () => {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Hero Section */}
-      <HeroSection
-        userName={user?.name || 'Trader'}
-        portfolioValue={calculateTotalValue()}
-        dayGain={calculateDayGain()}
-        dayGainPercent={calculateDayGainPercent()}
-      />
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Mint Trade</Text>
+          <Text style={styles.headerSubtitle}>Welcome back, {user?.name || 'Trader'}!</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.moreButton}
+          onPress={() => setShowQuickActions(true)}
+        >
+          <SFSymbol name="ellipsis.circle" size={24} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Section */}
+        <HeroSection
+          userName={user?.name || 'Trader'}
+          portfolioValue={calculateTotalValue()}
+          dayGain={calculateDayGain()}
+          dayGainPercent={calculateDayGainPercent()}
+        />
 
       {/* Wallet Card */}
       {wallet && (
@@ -190,7 +208,18 @@ export const DashboardScreen: React.FC = () => {
 
       {/* Bottom spacing for tab bar */}
       <View style={styles.bottomSpacing} />
-    </ScrollView>
+      </ScrollView>
+
+      {/* Quick Actions Menu */}
+      <QuickActionsMenu
+        visible={showQuickActions}
+        onClose={() => setShowQuickActions(false)}
+        onActionPress={(actionId) => {
+          // Handle navigation to different screens based on actionId
+          console.log('Navigate to:', actionId);
+        }}
+      />
+    </View>
   );
 };
 
@@ -198,6 +227,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.backgroundSecondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
