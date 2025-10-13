@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow reading portfolio and transactions
+      match /portfolio/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /transactions/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /notifications/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Stocks are readable by all authenticated users
+    match /stocks/{stockId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // Lessons are readable by all authenticated users
+    match /lessons/{lessonId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only admins can write
+    }
+    
+    // Price alerts are user-specific
+    match /priceAlerts/{alertId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Admin collections (only accessible by admins)
+    match /admin/{document=**} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
