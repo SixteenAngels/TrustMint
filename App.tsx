@@ -21,6 +21,8 @@ import { BottomTabNavigator } from './src/components/BottomTabNavigator';
 import { colors } from './src/styles/colors';
 import { typography } from './src/styles/typography';
 import { Stock } from './src/types';
+import SignInScreen from './src/screens/SignInScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -29,6 +31,7 @@ const AppContent: React.FC = () => {
   const [selectedStock, setSelectedStock] = useState<Stock | undefined>();
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [authScreen, setAuthScreen] = useState('signin'); // 'signin' or 'signup'
 
   const handleTabPress = (tabId: string) => {
     if (tabId === 'trading') {
@@ -99,7 +102,14 @@ const AppContent: React.FC = () => {
   if (!user) {
     return (
       <View style={styles.container}>
-        <OnboardingScreen onComplete={() => setShowWelcome(true)} />
+        {authScreen === 'signin' ? (
+          <SignInScreen />
+        ) : (
+          <SignUpScreen />
+        )}
+         <Text style={styles.toggleText} onPress={() => setAuthScreen(authScreen === 'signin' ? 'signup' : 'signin')}>
+          {authScreen === 'signin' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+        </Text>
         <StatusBar style="auto" />
       </View>
     );
@@ -143,5 +153,11 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.bodyLarge,
     color: colors.textSecondary,
+  },
+  toggleText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: colors.primary,
+    ...typography.body,
   },
 });

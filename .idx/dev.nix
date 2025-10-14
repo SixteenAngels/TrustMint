@@ -24,7 +24,4 @@
       enable = true;
     };
   };
-
-  # Enable the Android platform
-  platforms.android.enable = true;
 }
