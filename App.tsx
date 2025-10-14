@@ -20,12 +20,13 @@ import { AIInsightsScreen } from './src/screens/AIInsightsScreen';
 import { BottomTabNavigator } from './src/components/BottomTabNavigator';
 import { colors } from './src/styles/colors';
 import { typography } from './src/styles/typography';
+import { Stock } from './src/types';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showTrading, setShowTrading] = useState(false);
-  const [selectedStock, setSelectedStock] = useState(null);
+  const [selectedStock, setSelectedStock] = useState<Stock | undefined>();
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
 

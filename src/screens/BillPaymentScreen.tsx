@@ -136,6 +136,11 @@ export const BillPaymentScreen: React.FC = () => {
 
     setLoading(true);
     try {
+      const transactionFee = billService.calculatePaymentFees(
+        selectedProvider.id,
+        paymentMethod,
+        amountValue
+      );
       const paymentData = {
         userId: 'current_user_id',
         providerId: selectedProvider.id,
@@ -144,11 +149,8 @@ export const BillPaymentScreen: React.FC = () => {
         currency: 'GHS' as const,
         description: `Payment to ${selectedProvider.name}`,
         paymentMethod: paymentMethod as any,
-        transactionFee: billService.calculatePaymentFees(
-          selectedProvider.id,
-          paymentMethod,
-          amountValue
-        ),
+        transactionFee,
+        totalAmount: amountValue + transactionFee,
       };
 
       const paymentId = await billService.payBill(paymentData);

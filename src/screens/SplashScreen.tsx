@@ -27,7 +27,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete 
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 3000,
           useNativeDriver: true,
         }),
         Animated.spring(scaleAnim, {

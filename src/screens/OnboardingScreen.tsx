@@ -35,14 +35,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
   const { signInWithPhone, verifyOTP, updateUser } = useAuth();
 
   const handleSendOTP = async () => {
-    if (!phoneNumber.startsWith('+233')) {
-      Alert.alert('Error', 'Please enter a valid Ghana phone number starting with +233');
-      return;
-    }
+    const fullPhoneNumber = `+233${phoneNumber}`;
 
     setLoading(true);
     try {
-      const verificationId = await signInWithPhone(phoneNumber);
+      const verificationId = await signInWithPhone(fullPhoneNumber);
       setVerificationId(verificationId);
       setStep(2);
     } catch (error) {
@@ -152,7 +149,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Verify Your Phone</Text>
       <Text style={styles.subtitle}>
-        Enter the 6-digit code sent to {phoneNumber}
+        Enter the 6-digit code sent to +233{phoneNumber}
       </Text>
       
       <View style={styles.inputContainer}>

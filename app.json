@@ -16,7 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.minttrade.app"
+      "bundleIdentifier": "com.minttrade.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,11 +36,17 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications"
+      "expo-notifications",
+      "expo-font"
     ],
     "notification": {
       "icon": "./assets/icon.png",
       "color": "#007AFF"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "49177f96-b644-4e49-94ab-1a024f4d07cc"
+      }
     }
   }
 }

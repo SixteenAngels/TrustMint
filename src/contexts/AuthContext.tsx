@@ -1,15 +1,23 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithPhoneNumber, 
-  PhoneAuthProvider, 
+import {
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
   signInWithCredential,
-  signOut,
+  signOut as firebaseSignOut, // Renamed to avoid conflict
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  RecaptchaVerifier // Imported for phone auth
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
 import { User } from '../types';
+
+// For recaptcha verifier
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
+}
 
 interface AuthContextType {
   user: User | null;
@@ -49,10 +57,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return unsubscribe;
   }, []);
+  
+  // Setup recaptcha for phone number verification
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response: any) => {
+                // reCAPTCHA solved, allow signInWithPhoneNumber.
+            },
+            'expired-callback': () => {
+                // Response expired. Ask user to solve reCAPTCHA again.
+            }
+        });
+    }
+  }, [auth]);
+
 
   const signInWithPhone = async (phoneNumber: string): Promise<string> => {
     try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber);
+      const appVerifier = window.recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       return confirmation.verificationId;
     } catch (error) {
       console.error('Error sending OTP:', error);
@@ -64,11 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const credential = PhoneAuthProvider.credential(verificationId, otp);
       const result = await signInWithCredential(auth, credential);
-      
+
       // Create user document if it doesn't exist
       const userRef = doc(db, 'users', result.user.uid);
       const userDoc = await getDoc(userRef);
-      
+
       if (!userDoc.exists()) {
         const newUser: User = {
           uid: result.user.uid,
@@ -89,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (): Promise<void> => {
     try {
-      await signOut(auth);
+      await firebaseSignOut(auth); // Use the renamed import
       setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -99,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUser = async (userData: Partial<User>): Promise<void> => {
     if (!user) return;
-    
+
     try {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, { ...user, ...userData }, { merge: true });
@@ -121,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={value}>
+      <div id="recaptcha-container"></div>
       {children}
     </AuthContext.Provider>
   );

@@ -282,14 +282,14 @@ export const InvestmentVaultsScreen: React.FC = () => {
       <View style={styles.vaultPerformance}>
         <Text style={styles.performanceLabel}>Performance</Text>
         <View style={styles.performanceRow}>
-          <Text style={styles.performanceItem}>1M: {vault.performance.monthly > 0 ? '+' : ''}{vault.performance.monthly.toFixed(1)}%</Text>
-          <Text style={styles.performanceItem}>1Y: {vault.performance.yearly > 0 ? '+' : ''}{vault.performance.yearly.toFixed(1)}%</Text>
+          <Text style={styles.performanceItemText}>1M: {vault.performance.monthly > 0 ? '+' : ''}{vault.performance.monthly.toFixed(1)}%</Text>
+          <Text style={styles.performanceItemText}>1Y: {vault.performance.yearly > 0 ? '+' : ''}{vault.performance.yearly.toFixed(1)}%</Text>
         </View>
       </View>
       
       <View style={styles.vaultFooter}>
         <Text style={styles.vaultInvestors}>{vault.totalInvestors} investors</Text>
-        <Text style={styles.investButton}>Invest Now →</Text>
+        <Text style={styles.cardInvestButton}>Invest Now →</Text>
       </View>
     </TouchableOpacity>
   );
@@ -366,32 +366,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
     <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Performance Overview</Text>
-        
-        <View style={styles.performanceCard}>
-          <Text style={styles.performanceTitle}>Total Portfolio Value</Text>
-          <Text style={styles.performanceAmount}>
-            ₵{myInvestments.reduce((sum, inv) => sum + inv.currentValue, 0).toFixed(2)}
-          </Text>
-          <Text style={styles.performanceChange}>
-            {myInvestments.reduce((sum, inv) => sum + inv.gainLoss, 0) >= 0 ? '+' : ''}
-            ₵{myInvestments.reduce((sum, inv) => sum + inv.gainLoss, 0).toFixed(2)}
-          </Text>
-        </View>
-        
-        <View style={styles.performanceGrid}>
-          <View style={styles.performanceItem}>
-            <Text style={styles.performanceValue}>
-              {myInvestments.length}
-            </Text>
-            <Text style={styles.performanceLabel}>Active Vaults</Text>
-          </View>
-          <View style={styles.performanceItem}>
-            <Text style={styles.performanceValue}>
-              ₵{myInvestments.reduce((sum, inv) => sum + inv.amount, 0).toFixed(2)}
-            </Text>
-            <Text style={styles.performanceLabel}>Total Invested</Text>
-          </View>
-        </View>
+        <Text>Coming Soon!</Text>
       </View>
     </ScrollView>
   );
@@ -461,7 +436,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
               </View>
               
               <TouchableOpacity
-                style={[styles.investButton, (!investmentAmount || loading) && styles.investButtonDisabled]}
+                style={[styles.modalInvestButton, (!investmentAmount || loading) && styles.investButtonDisabled]}
                 onPress={handleInvest}
                 disabled={!investmentAmount || loading}
               >
@@ -720,7 +695,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  performanceItem: {
+  performanceItemText: {
     ...typography.caption,
     color: colors.textPrimary,
     fontWeight: '600',
@@ -734,7 +709,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  investButton: {
+  cardInvestButton: {
     ...typography.caption,
     color: colors.primary,
     fontWeight: '600',
@@ -814,15 +789,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
+  performanceItem: {
+    alignItems: 'center',
+  },
   performanceValue: {
     ...typography.h4,
     color: colors.textPrimary,
     fontWeight: '700',
-  },
-  performanceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
   },
   modalContainer: {
     flex: 1,
@@ -948,7 +921,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '600',
   },
-  investButton: {
+  modalInvestButton: {
     backgroundColor: colors.primary,
     padding: spacing.lg,
     borderRadius: 16,

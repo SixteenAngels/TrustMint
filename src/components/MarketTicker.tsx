@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 import { Stock } from '../types';
 
 interface MarketTickerProps {

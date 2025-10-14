@@ -36,7 +36,7 @@ export const AdminScreen: React.FC = () => {
       })) as Stock[];
 
       const usersData = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
+        uid: doc.id,
         ...doc.data()
       })) as User[];
 

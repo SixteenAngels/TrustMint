@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -15,6 +16,7 @@ import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { mockPosts } from '../data/mockPosts';
 
 export const SocialTradingScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'leaders' | 'messages'>('feed');
@@ -160,15 +162,15 @@ export const SocialTradingScreen: React.FC = () => {
       }
       showsVerticalScrollIndicator={false}
     >
-      {socialFeed.map((post) => (
-        <View key={post.id} style={styles.feedPost}>
+      {Object.values(mockPosts.posts).map((post: any, index: number) => (
+        <View key={index} style={styles.feedPost}>
           <View style={styles.postHeader}>
             <View style={styles.userInfo}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>👤</Text>
               </View>
               <View style={styles.userDetails}>
-                <Text style={styles.username}>@trader_pro</Text>
+                <Text style={styles.username}>{post.author}</Text>
                 <Text style={styles.postTime}>2 hours ago</Text>
               </View>
             </View>
@@ -179,26 +181,21 @@ export const SocialTradingScreen: React.FC = () => {
           
           <View style={styles.postContent}>
             <Text style={styles.postText}>
-              Just bought 100 shares of MTN at ₵1.20. Expecting 15% upside based on technical analysis. 
-              #MTN #GhanaStocks #Trading
+              {post.title}
             </Text>
             
             <View style={styles.tradeDetails}>
               <View style={styles.tradeItem}>
-                <Text style={styles.tradeLabel}>Symbol</Text>
-                <Text style={styles.tradeValue}>MTN</Text>
+                <Text style={styles.tradeLabel}>Views</Text>
+                <Text style={styles.tradeValue}>{post.metrics.views}</Text>
               </View>
               <View style={styles.tradeItem}>
-                <Text style={styles.tradeLabel}>Action</Text>
-                <Text style={[styles.tradeValue, { color: colors.success }]}>BUY</Text>
+                <Text style={styles.tradeLabel}>Likes</Text>
+                <Text style={[styles.tradeValue, { color: colors.success }]}>{post.metrics.likes}</Text>
               </View>
               <View style={styles.tradeItem}>
-                <Text style={styles.tradeLabel}>Price</Text>
-                <Text style={styles.tradeValue}>₵1.20</Text>
-              </View>
-              <View style={styles.tradeItem}>
-                <Text style={styles.tradeLabel}>Target</Text>
-                <Text style={[styles.tradeValue, { color: colors.success }]}>₵1.38</Text>
+                <Text style={styles.tradeLabel}>Shares</Text>
+                <Text style={styles.tradeValue}>{post.metrics.shares}</Text>
               </View>
             </View>
           </View>
@@ -209,7 +206,7 @@ export const SocialTradingScreen: React.FC = () => {
               onPress={() => handleLikePost(post.id)}
             >
               <Text style={styles.actionIcon}>❤️</Text>
-              <Text style={styles.actionText}>24</Text>
+              <Text style={styles.actionText}>{post.metrics.likes}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton}>
@@ -629,3 +626,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+

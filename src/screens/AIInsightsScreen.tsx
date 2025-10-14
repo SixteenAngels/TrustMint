@@ -11,6 +11,7 @@ import {
 import { AIService } from '../services/aiService';
 import { LanguageService } from '../services/languageService';
 import { AIInsight, AIPrediction, AIRecommendation } from '../types/ai';
+import { Stock } from '../types';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -59,22 +60,15 @@ export const AIInsightsScreen: React.FC = () => {
   const loadInsights = async () => {
     try {
       // Mock stock data for insights
-      const mockStock = {
+      const mockStock: Stock = {
+        id: 'mtn-ghana-mock-id',
         symbol: 'MTN',
         name: 'MTN Ghana',
         price: 1.20,
         change: 0.05,
         changePercent: 4.35,
         volume: 1250000,
-        high: 1.25,
-        low: 1.15,
-        open: 1.18,
-        previousClose: 1.15,
-        sector: 'Telecommunications',
-        marketCap: 2500000000,
-        pe: 15.2,
-        dividend: 0.08,
-        lastUpdated: new Date(),
+        updatedAt: new Date(),
       };
 
       const stockInsights = await aiService.generateStockInsights('MTN', mockStock);
