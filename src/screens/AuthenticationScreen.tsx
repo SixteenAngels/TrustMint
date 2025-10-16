@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,41 +9,53 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Animated,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { firebaseConfig } from '../../firebase.config';
 
-interface OnboardingScreenProps {
+interface AuthenticationScreenProps {
   onComplete: () => void;
 }
 
-export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onComplete }) => {
+  const recaptchaVerifier = useRef<any>(null);
   const [step, setStep] = useState(1);
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signInWithPhone, verifyOTP, updateUser } = useAuth();
+  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser, signInWithApple, signInWithGoogle } = useAuth();
 
-  const handleSendOTP = async () => {
-    const fullPhoneNumber = `+233${phoneNumber}`;
-
+  const handleEmailPrimary = async () => {
     setLoading(true);
     try {
-      const verificationId = await signInWithPhone(fullPhoneNumber);
-      setVerificationId(verificationId);
-      setStep(2);
+      if (mode === 'signup') {
+        if (!email || !password || password !== confirmPassword) {
+          Alert.alert('Error', 'Enter a valid email and matching passwords');
+          return;
+        }
+        await signUpWithEmail(email.trim(), password, name.trim() || undefined);
+        setStep(2);
+      } else {
+        await signInWithEmail(email.trim(), password);
+        setStep(2);
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      Alert.alert('Error', mode === 'signup' ? 'Failed to sign up' : 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -108,38 +120,47 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
       </View>
       
       <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Phone Number</Text>
-          <View style={styles.phoneInputContainer}>
-            <View style={styles.countryCode}>
-              <Text style={styles.countryCodeText}>🇬🇭 +233</Text>
-            </View>
-            <TextInput
-              style={styles.phoneInput}
-              placeholder="XXXXXXXXX"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              autoFocus
-            />
+        {mode === 'signup' && (
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput style={styles.input} placeholder="Your name" value={name} onChangeText={setName} />
           </View>
-          <Text style={styles.helperText}>
-            We'll send you a verification code to secure your account
-          </Text>
+        )}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput style={styles.input} placeholder="you@email.com" autoCapitalize="none" value={email} onChangeText={setEmail} />
         </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput style={styles.input} placeholder="••••••••" secureTextEntry value={password} onChangeText={setPassword} />
+        </View>
+        {mode === 'signup' && (
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Confirm Password</Text>
+            <TextInput style={styles.input} placeholder="••••••••" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+          </View>
+        )}
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            loading && styles.buttonDisabled,
-            !phoneNumber && styles.buttonDisabled
-          ]}
-          onPress={handleSendOTP}
-          disabled={loading || !phoneNumber}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Sending OTP...' : 'Send Verification Code'}
-          </Text>
+        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleEmailPrimary} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? (mode === 'signup' ? 'Creating...' : 'Signing in...') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 12 }} />
+        {Platform.OS === 'ios' && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={8}
+            style={{ width: '100%', height: 44, marginBottom: 8 }}
+            onPress={async () => { try { await signInWithApple(); } catch {} }}
+          />
+        )}
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#4285F4' }]} onPress={async () => { try { await signInWithGoogle(); } catch {} }}>
+          <Text style={styles.buttonText}>Continue with Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.linkButton} onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}>
+          <Text style={styles.linkText}>{mode === 'signup' ? 'Have an account? Sign In' : "New here? Create Account"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -148,21 +169,27 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Verify Your Phone</Text>
-      <Text style={styles.subtitle}>
-        Enter the 6-digit code sent to +233{phoneNumber}
-      </Text>
+      <Text style={styles.subtitle}>Add your number and verify to secure your account</Text>
       
       <View style={styles.inputContainer}>
+        <Text style={styles.label}>Phone (+233...)</Text>
+        <TextInput style={styles.input} placeholder="+233XXXXXXXXX" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" />
+      </View>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={async () => {
+          try { setLoading(true); const id = await startPhoneVerification(phoneNumber, recaptchaVerifier.current); setVerificationId(id); }
+          catch { Alert.alert('Error', 'Failed to send code'); }
+          finally { setLoading(false); }
+        }}
+        disabled={loading || !phoneNumber}
+      >
+        <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Code'}</Text>
+      </TouchableOpacity>
+
+      <View style={styles.inputContainer}>
         <Text style={styles.label}>Verification Code</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="123456"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={6}
-          autoFocus
-        />
+        <TextInput style={styles.input} placeholder="123456" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
       </View>
 
       <TouchableOpacity
@@ -261,6 +288,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebaseConfig as any}
+        attemptInvisibleVerification
+      />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
@@ -298,9 +330,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     ...shadows.card,
   },
-  logoEmoji: {
-    fontSize: 32,
-  },
+  logoEmoji: { fontSize: 32 },
   title: {
     ...typography.h2,
     color: colors.textPrimary,
@@ -318,41 +348,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     ...shadows.card,
   },
-  inputContainer: {
-    marginBottom: spacing.xl,
-  },
-  label: {
-    ...typography.bodyMedium,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    backgroundColor: colors.backgroundSecondary,
-    overflow: 'hidden',
-  },
-  countryCode: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-  },
-  countryCodeText: {
-    ...typography.bodyMedium,
-    color: colors.primary,
-  },
-  phoneInput: {
-    flex: 1,
-    padding: spacing.md,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
+  inputContainer: { marginBottom: spacing.xl },
+  label: { ...typography.bodyMedium, color: colors.textPrimary, marginBottom: spacing.sm },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -362,12 +359,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
     color: colors.textPrimary,
   },
-  helperText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 12,
@@ -375,21 +366,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...shadows.button,
   },
-  buttonDisabled: {
-    backgroundColor: colors.border,
-  },
-  buttonText: {
-    ...typography.button,
-    color: colors.textWhite,
-  },
-  linkButton: {
-    alignItems: 'center',
-    marginTop: spacing.lg,
-  },
-  linkText: {
-    ...typography.bodyMedium,
-    color: colors.primary,
-  },
+  buttonDisabled: { backgroundColor: colors.border },
+  buttonText: { ...typography.button, color: colors.textWhite },
+  linkButton: { alignItems: 'center', marginTop: spacing.lg },
+  linkText: { ...typography.bodyMedium, color: colors.primary },
   welcomeContainer: {
     backgroundColor: colors.successLight,
     padding: spacing.lg,
@@ -399,9 +379,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.success,
   },
-  welcomeText: {
-    ...typography.bodyMedium,
-    color: colors.success,
-    textAlign: 'center',
-  },
+  welcomeText: { ...typography.bodyMedium, color: colors.success, textAlign: 'center' },
 });

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { PaymentService, PaymentMethod } from '../services/paymentService';
 import { useWallet } from '../contexts/WalletContext';
+import { useAuth } from '../contexts/AuthContext';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -23,6 +24,7 @@ interface AddMoneyScreenProps {
 
 export const AddMoneyScreen: React.FC<AddMoneyScreenProps> = ({ onClose }) => {
   const { wallet, refreshWallet } = useWallet();
+  const { user } = useAuth();
   const [amount, setAmount] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -93,10 +95,12 @@ export const AddMoneyScreen: React.FC<AddMoneyScreenProps> = ({ onClose }) => {
 
       switch (selectedMethod.type) {
         case 'mobile_money':
-          // For demo, we'll use a mock phone number
+          // TODO: Get real phone number from user profile
+          // This should get the user's verified phone number from their profile
+          const userPhone = user?.phone || '+233XXXXXXXXX'; // Fallback for development
           paymentResponse = await paymentService.processMobileMoneyPayment(
             amountValue,
-            '+233XXXXXXXXX', // In real app, get from user profile
+            userPhone,
             selectedMethod.id.includes('mtn') ? 'MTN' : 
             selectedMethod.id.includes('vodafone') ? 'VODAFONE' : 'AIRTELTIGO',
             `Add money to Mint Wallet`

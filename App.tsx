@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { WalletProvider } from './src/contexts/WalletContext';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { WelcomeSlidesScreen } from './src/screens/WelcomeSlidesScreen';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { AuthenticationScreen } from './src/screens/AuthenticationScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { MarketsScreen } from './src/screens/MarketsScreen';
 import { TradingScreen } from './src/screens/TradingScreen';
@@ -20,18 +20,14 @@ import { AIInsightsScreen } from './src/screens/AIInsightsScreen';
 import { BottomTabNavigator } from './src/components/BottomTabNavigator';
 import { colors } from './src/styles/colors';
 import { typography } from './src/styles/typography';
-import { Stock } from './src/types';
-import SignInScreen from './src/screens/SignInScreen';
-import SignUpScreen from './src/screens/SignUpScreen';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showTrading, setShowTrading] = useState(false);
-  const [selectedStock, setSelectedStock] = useState<Stock | undefined>();
+  const [selectedStock, setSelectedStock] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [authScreen, setAuthScreen] = useState('signin'); // 'signin' or 'signup'
 
   const handleTabPress = (tabId: string) => {
     if (tabId === 'trading') {
@@ -102,14 +98,7 @@ const AppContent: React.FC = () => {
   if (!user) {
     return (
       <View style={styles.container}>
-        {authScreen === 'signin' ? (
-          <SignInScreen />
-        ) : (
-          <SignUpScreen />
-        )}
-         <Text style={styles.toggleText} onPress={() => setAuthScreen(authScreen === 'signin' ? 'signup' : 'signin')}>
-          {authScreen === 'signin' ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-        </Text>
+        <AuthenticationScreen onComplete={() => setShowWelcome(true)} />
         <StatusBar style="auto" />
       </View>
     );
@@ -153,11 +142,5 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.bodyLarge,
     color: colors.textSecondary,
-  },
-  toggleText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: colors.primary,
-    ...typography.body,
   },
 });

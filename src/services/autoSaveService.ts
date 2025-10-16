@@ -289,7 +289,7 @@ export class AutoSaveService {
   private async addToInvestmentVault(vaultId: string, amount: number): Promise<void> {
     try {
       // This would integrate with the investment vault service
-      console.log(`Adding ${amount} to vault ${vaultId}`);
+      // Add amount to vault
     } catch (error) {
       console.error('Error adding to investment vault:', error);
       throw error;
@@ -300,7 +300,7 @@ export class AutoSaveService {
   private async addToSpecificStock(stockSymbol: string, amount: number): Promise<void> {
     try {
       // This would integrate with the stock trading service
-      console.log(`Adding ${amount} to stock ${stockSymbol}`);
+      // Add amount to stock
     } catch (error) {
       console.error('Error adding to specific stock:', error);
       throw error;

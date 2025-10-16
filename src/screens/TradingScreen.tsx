@@ -21,7 +21,7 @@ interface TradingScreenProps {
 
 export const TradingScreen: React.FC<TradingScreenProps> = ({ stock, onClose }) => {
   const { user } = useAuth();
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(stock || null);
+  const [selectedStock, setSelectedStock] = useState<Stock | undefined>(stock);
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');

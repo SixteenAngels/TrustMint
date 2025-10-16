@@ -21,9 +21,16 @@ export class ChartService {
     return ChartService.instance;
   }
 
-  // Generate sample OHLC data for demonstration
+  // Fetch real historical data from API
+  async fetchHistoricalData(symbol: string, timeRange: string): Promise<OHLCData[]> {
+    // TODO: Implement actual API call to fetch historical data
+    // This should call your data source API to get real OHLC data
+    throw new Error('Historical data API not implemented - requires production integration');
+  }
+
+  // Generate sample OHLC data for demonstration (DEPRECATED - use fetchHistoricalData)
   generateSampleOHLCData(timeRange: string, symbol: string): OHLCData[] {
-    const days = CHART_TIME_RANGES.find(range => range.value === timeRange)?.days || 30;
+    const days = CHART_TIME_RANGES.find(range => range.value === timeRange)?.days ?? 30;
     const dataPoints = days === 0 ? 1000 : Math.min(days * 24, 1000); // Max 1000 points
     const data: OHLCData[] = [];
     

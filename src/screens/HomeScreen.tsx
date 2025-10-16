@@ -26,7 +26,7 @@ import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 
-export const DashboardScreen: React.FC = () => {
+export const HomeScreen: React.FC = () => {
   const { user } = useAuth();
   const { wallet } = useWallet();
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -216,7 +216,7 @@ export const DashboardScreen: React.FC = () => {
         onClose={() => setShowQuickActions(false)}
         onActionPress={(actionId) => {
           // Handle navigation to different screens based on actionId
-          // Navigate to action
+          console.log('Navigate to:', actionId);
         }}
       />
     </View>

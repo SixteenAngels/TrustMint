@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -10,6 +11,8 @@ import {
 } from 'react-native';
 import { AIService } from '../services/aiService';
 import { LanguageService } from '../services/languageService';
+import { StockService } from '../services/stockService';
+import { useAuth } from '../contexts/AuthContext';
 import { AIInsight, AIPrediction, AIRecommendation } from '../types/ai';
 import { Stock } from '../types';
 import { colors } from '../styles/colors';
@@ -18,6 +21,7 @@ import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 
 export const AIInsightsScreen: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'insights' | 'predictions' | 'recommendations' | 'portfolio'>('insights');
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
@@ -59,19 +63,18 @@ export const AIInsightsScreen: React.FC = () => {
 
   const loadInsights = async () => {
     try {
-      // Mock stock data for insights
-      const mockStock: Stock = {
-        id: 'mtn-ghana-mock-id',
-        symbol: 'MTN',
-        name: 'MTN Ghana',
-        price: 1.20,
-        change: 0.05,
-        changePercent: 4.35,
-        volume: 1250000,
-        updatedAt: new Date(),
-      };
+      // Get real stock data from API
+      const stockService = StockService.getInstance();
+      const stocks = await stockService.getStocks();
+      
+      if (stocks.length === 0) {
+        setInsights([]);
+        return;
+      }
 
-      const stockInsights = await aiService.generateStockInsights('MTN', mockStock);
+      // Generate insights for the first available stock
+      const selectedStock = stocks[0];
+      const stockInsights = await aiService.generateStockInsights(selectedStock.symbol, selectedStock);
       setInsights(stockInsights);
     } catch (error) {
       console.error('Error loading insights:', error);
@@ -89,8 +92,7 @@ export const AIInsightsScreen: React.FC = () => {
 
   const loadRecommendations = async () => {
     try {
-      // Mock user ID
-      const userId = 'current_user_id';
+      const userId = user?.uid || 'current_user_id';
       const userRecommendations = await aiService.generateRecommendations(userId);
       setRecommendations(userRecommendations);
     } catch (error) {
@@ -128,7 +130,7 @@ export const AIInsightsScreen: React.FC = () => {
       'AI Recommendation',
       recommendation.description,
       [
-        { text: 'View Details', onPress: () => console.log('View details') },
+        { text: 'View Details', onPress: () => {} },
         { text: 'Dismiss', style: 'cancel' }
       ]
     );

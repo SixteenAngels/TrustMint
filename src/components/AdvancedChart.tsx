@@ -67,7 +67,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
   });
   const [chartMetrics, setChartMetrics] = useState<ChartMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDataPoint, setSelectedDataPoint] = useState<ChartDataPoint | undefined>();
+  const [selectedDataPoint, setSelectedDataPoint] = useState<ChartDataPoint | undefined>(undefined);
 
   const chartService = ChartService.getInstance();
 
@@ -85,8 +85,9 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
   const loadChartData = async () => {
     setLoading(true);
     try {
-      // Generate sample OHLC data
-      const ohlc = chartService.generateSampleOHLCData(chartConfig.timeRange, symbol);
+      // TODO: Fetch real OHLC data from API
+      // This should get actual historical price data for the symbol
+      const ohlc = await chartService.fetchHistoricalData(symbol, chartConfig.timeRange);
       setOhlcData(ohlc);
       
       // Convert to Victory format
@@ -319,7 +320,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
           {/* Tooltip */}
           <VictoryTooltip
             active={!!selectedDataPoint}
-            datum={selectedDataPoint}
+            datum={selectedDataPoint as unknown as Record<string, any>}
             labelComponent={
               <VictoryLabel
                 text={selectedDataPoint ? 

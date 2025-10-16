@@ -364,35 +364,9 @@ export class SocialService {
   // Leaderboards
   async getLeaderboard(criteria: string, period: string, limitCount: number = 50): Promise<LeaderboardEntry[]> {
     try {
-      // This would typically involve complex aggregation queries
-      // For now, we'll return mock data
-      const mockEntries: LeaderboardEntry[] = [
-        {
-          rank: 1,
-          userId: 'user1',
-          username: 'trader_pro',
-          displayName: 'Trader Pro',
-          value: 45.2,
-          change: 2.1,
-          changePercent: 4.9,
-          verified: true,
-          badges: [],
-        },
-        {
-          rank: 2,
-          userId: 'user2',
-          username: 'ghana_investor',
-          displayName: 'Ghana Investor',
-          value: 38.7,
-          change: 1.8,
-          changePercent: 4.9,
-          verified: true,
-          badges: [],
-        },
-        // Add more mock entries...
-      ];
-      
-      return mockEntries.slice(0, limitCount);
+      // TODO: Implement real leaderboard data from database
+      // This should query user performance data and calculate rankings
+      throw new Error('Leaderboard data not implemented - requires production database integration');
     } catch (error) {
       console.error('Error getting leaderboard:', error);
       throw error;
@@ -443,9 +417,9 @@ export class SocialService {
   // Analytics
   async getSocialAnalytics(userId: string, period: string): Promise<SocialAnalytics> {
     try {
-      // This would involve complex aggregation queries
-      // For now, return mock data
-      return {
+      // TODO: Implement real social analytics from database
+      // This should query user engagement data and calculate metrics
+      throw new Error('Social analytics not implemented - requires production database integration');
         userId,
         period: period as any,
         followers: {

@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import { BillPaymentService } from '../services/billPaymentService';
 import { BillProvider, BillAccount, BillPayment, BillCategory } from '../types/payments';
+import { useAuth } from '../contexts/AuthContext';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 
 export const BillPaymentScreen: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'pay' | 'accounts' | 'history'>('pay');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProvider, setSelectedProvider] = useState<BillProvider | null>(null);
@@ -71,8 +73,8 @@ export const BillPaymentScreen: React.FC = () => {
 
   const loadAccounts = async () => {
     try {
-      // Mock user ID
-      const userId = 'current_user_id';
+      // TODO: Get real user ID from auth context
+      const userId = user?.uid || 'current_user_id';
       const userAccounts = await billService.getBillAccounts(userId);
       setAccounts(userAccounts);
     } catch (error) {
@@ -82,8 +84,8 @@ export const BillPaymentScreen: React.FC = () => {
 
   const loadPaymentHistory = async () => {
     try {
-      // Mock user ID
-      const userId = 'current_user_id';
+      // TODO: Get real user ID from auth context
+      const userId = user?.uid || 'current_user_id';
       const userPayments = await billService.getBillPaymentHistory(userId, 20);
       setPayments(userPayments);
     } catch (error) {
@@ -136,11 +138,6 @@ export const BillPaymentScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      const transactionFee = billService.calculatePaymentFees(
-        selectedProvider.id,
-        paymentMethod,
-        amountValue
-      );
       const paymentData = {
         userId: 'current_user_id',
         providerId: selectedProvider.id,
@@ -149,8 +146,12 @@ export const BillPaymentScreen: React.FC = () => {
         currency: 'GHS' as const,
         description: `Payment to ${selectedProvider.name}`,
         paymentMethod: paymentMethod as any,
-        transactionFee,
-        totalAmount: amountValue + transactionFee,
+        transactionFee: billService.calculatePaymentFees(
+          selectedProvider.id,
+          paymentMethod,
+          amountValue
+        ),
+        totalAmount: amountValue + billService.calculatePaymentFees(selectedProvider.id, paymentMethod, amountValue),
       };
 
       const paymentId = await billService.payBill(paymentData);

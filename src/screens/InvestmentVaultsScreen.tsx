@@ -280,16 +280,16 @@ export const InvestmentVaultsScreen: React.FC = () => {
       </View>
       
       <View style={styles.vaultPerformance}>
-        <Text style={styles.performanceLabel}>Performance</Text>
+        <Text style={styles.performanceGridLabel}>Performance</Text>
         <View style={styles.performanceRow}>
-          <Text style={styles.performanceItemText}>1M: {vault.performance.monthly > 0 ? '+' : ''}{vault.performance.monthly.toFixed(1)}%</Text>
-          <Text style={styles.performanceItemText}>1Y: {vault.performance.yearly > 0 ? '+' : ''}{vault.performance.yearly.toFixed(1)}%</Text>
+          <Text style={styles.performanceItem}>1M: {vault.performance.monthly > 0 ? '+' : ''}{vault.performance.monthly.toFixed(1)}%</Text>
+          <Text style={styles.performanceItem}>1Y: {vault.performance.yearly > 0 ? '+' : ''}{vault.performance.yearly.toFixed(1)}%</Text>
         </View>
       </View>
       
       <View style={styles.vaultFooter}>
         <Text style={styles.vaultInvestors}>{vault.totalInvestors} investors</Text>
-        <Text style={styles.cardInvestButton}>Invest Now →</Text>
+          <Text style={styles.investButtonTextLink}>Invest Now →</Text>
       </View>
     </TouchableOpacity>
   );
@@ -366,7 +366,32 @@ export const InvestmentVaultsScreen: React.FC = () => {
     <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Performance Overview</Text>
-        <Text>Coming Soon!</Text>
+        
+        <View style={styles.performanceCard}>
+          <Text style={styles.performanceTitle}>Total Portfolio Value</Text>
+          <Text style={styles.performanceAmount}>
+            ₵{myInvestments.reduce((sum, inv) => sum + inv.currentValue, 0).toFixed(2)}
+          </Text>
+          <Text style={styles.performanceChange}>
+            {myInvestments.reduce((sum, inv) => sum + inv.gainLoss, 0) >= 0 ? '+' : ''}
+            ₵{myInvestments.reduce((sum, inv) => sum + inv.gainLoss, 0).toFixed(2)}
+          </Text>
+        </View>
+        
+        <View style={styles.performanceGrid}>
+          <View style={styles.performanceItem}>
+            <Text style={styles.performanceValue}>
+              {myInvestments.length}
+            </Text>
+            <Text style={styles.performanceGridLabel}>Active Vaults</Text>
+          </View>
+          <View style={styles.performanceItem}>
+            <Text style={styles.performanceValue}>
+              ₵{myInvestments.reduce((sum, inv) => sum + inv.amount, 0).toFixed(2)}
+            </Text>
+            <Text style={styles.performanceGridLabel}>Total Invested</Text>
+          </View>
+        </View>
       </View>
     </ScrollView>
   );
@@ -436,7 +461,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
               </View>
               
               <TouchableOpacity
-                style={[styles.modalInvestButton, (!investmentAmount || loading) && styles.investButtonDisabled]}
+                style={[styles.investButton, (!investmentAmount || loading) && styles.investButtonDisabled]}
                 onPress={handleInvest}
                 disabled={!investmentAmount || loading}
               >
@@ -686,19 +711,13 @@ const styles = StyleSheet.create({
   vaultPerformance: {
     marginBottom: spacing.md,
   },
-  performanceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
+  // Note: renamed to performanceGridLabel below to avoid duplicate key
   performanceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  performanceItemText: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontWeight: '600',
+  performanceItem: {
+    alignItems: 'center',
   },
   vaultFooter: {
     flexDirection: 'row',
@@ -709,7 +728,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  cardInvestButton: {
+  investButtonTextLink: {
     ...typography.caption,
     color: colors.primary,
     fontWeight: '600',
@@ -789,13 +808,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
-  performanceItem: {
-    alignItems: 'center',
-  },
   performanceValue: {
     ...typography.h4,
     color: colors.textPrimary,
     fontWeight: '700',
+  },
+  performanceGridLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   modalContainer: {
     flex: 1,
@@ -921,7 +942,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '600',
   },
-  modalInvestButton: {
+  investButton: {
     backgroundColor: colors.primary,
     padding: spacing.lg,
     borderRadius: 16,

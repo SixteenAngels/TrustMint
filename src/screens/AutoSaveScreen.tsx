@@ -133,9 +133,9 @@ export const AutoSaveScreen: React.FC = () => {
         name: ruleName,
         description: ruleDescription,
         isActive: true,
-        triggerType: triggerType as any,
+        triggerType: triggerType as 'round_up' | 'percentage' | 'fixed_amount' | 'smart_save',
         triggerSettings,
-        destinationType: destinationType as any,
+        destinationType: destinationType as 'savings_account' | 'investment_vault' | 'specific_stock',
         destinationId: destinationId || 'default_savings',
         priority: rules.length + 1,
       };
@@ -171,7 +171,7 @@ export const AutoSaveScreen: React.FC = () => {
         currentAmount: 0,
         targetDate: new Date(targetDate),
         priority: goalPriority,
-        category: goalCategory || 'other',
+        category: (goalCategory || 'other') as 'emergency' | 'vacation' | 'education' | 'home' | 'car' | 'wedding' | 'retirement' | 'other',
         isActive: true,
         contributions: [],
         autoSaveRules: [],
@@ -259,7 +259,7 @@ export const AutoSaveScreen: React.FC = () => {
             styles.tabButton,
             activeTab === tab.id && styles.tabButtonActive
           ]}
-          onPress={() => setActiveTab(tab.id as any)}
+          onPress={() => setActiveTab(tab.id as 'rules' | 'goals' | 'analytics')}
         >
           <Text style={styles.tabIcon}>{tab.icon}</Text>
           <Text style={[

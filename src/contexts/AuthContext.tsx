@@ -3,12 +3,21 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut as firebaseSignOut,
+  updateProfile,
+  PhoneAuthProvider,
+  signInWithCredential,
+  linkWithCredential,
+  signOut,
   onAuthStateChanged,
   User as FirebaseUser,
+  ApplicationVerifier,
 } from 'firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import { API_BASE_URL, GOOGLE_CLIENT_ID } from '../config';
+import { signInWithCustomToken } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
 import { User } from '../types';
@@ -16,8 +25,11 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, phoneNumber: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  startPhoneVerification: (phoneNumber: string, appVerifier: ApplicationVerifier) => Promise<string>;
+  verifyOTP: (verificationId: string, otp: string) => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
@@ -44,13 +56,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (userDoc.exists()) {
           setUser({ ...userDoc.data(), uid: firebaseUser.uid } as User);
         } else {
-          // If the user signed in with Google for the first time, create a new user document
+          // If the user signed in with a social provider for the first time, create a new user document
           const newUser: User = {
             uid: firebaseUser.uid,
             name: firebaseUser.displayName || '',
             email: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
-            verified: true,
+            verified: true, // Assume verified with social provider
             balance: 10000, // Starting demo balance
             createdAt: new Date(),
           };
@@ -66,48 +78,97 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, phoneNumber: string): Promise<void> => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      const newUser: User = {
-        uid: result.user.uid,
-        name: '',
-        email: result.user.email || '',
-        phone: phoneNumber,
-        verified: false,
-        balance: 10000, // Starting demo balance
-        createdAt: new Date(),
-      };
-      await setDoc(doc(db, 'users', result.user.uid), newUser);
-      setUser(newUser);
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
+  const signUpWithEmail = async (email: string, password: string, name?: string): Promise<void> => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (name) await updateProfile(cred.user, { displayName: name });
+    // The onAuthStateChanged listener will handle creating the user document
+  };
+
+  const signInWithEmail = async (email: string, password: string): Promise<void> => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const startPhoneVerification = async (phoneNumber: string, appVerifier: ApplicationVerifier): Promise<string> => {
+    const provider = new PhoneAuthProvider(auth);
+    const verificationId = await provider.verifyPhoneNumber(phoneNumber, appVerifier);
+    return verificationId;
+  };
+
+  const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
+
+    // If user already signed in (email/SSO), link phone to that account; otherwise sign in with phone
+    if (auth.currentUser) {
+      const linkedResult = await linkWithCredential(auth.currentUser, credential);
+      const userRef = doc(db, 'users', linkedResult.user.uid);
+      await setDoc(userRef, { phone: linkedResult.user.phoneNumber || '', verified: true }, { merge: true });
+      setUser((prev) => prev ? { ...prev, phone: linkedResult.user.phoneNumber || '', verified: true } : prev);
+    } else {
+      const result = await signInWithCredential(auth, credential);
+      const userRef = doc(db, 'users', result.user.uid);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        const newUser: User = {
+          uid: result.user.uid,
+          name: '',
+          phone: result.user.phoneNumber || '',
+          verified: true,
+          balance: 10000,
+          createdAt: new Date(),
+        };
+        await setDoc(userRef, newUser);
+        setUser(newUser);
+      }
     }
   };
 
-  const signIn = async (email: string, password: string): Promise<void> => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error('Error signing in:', error);
-      throw error;
-    }
+  const signInWithApple = async (): Promise<void> => {
+    // Create a random nonce and its SHA256 hash for Apple
+    const rawNonce = Math.random().toString(36).substring(2);
+    const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashedNonce,
+    });
+    // Exchange with Node backend to mint Firebase custom token
+    const res = await fetch(`${API_BASE_URL}/auth/apple`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identityToken: credential.identityToken, rawNonce }),
+    });
+    if (!res.ok) throw new Error('Apple sign-in failed');
+    const { customToken } = await res.json();
+    await signInWithCustomToken(auth, customToken);
   };
 
   const signInWithGoogle = async (): Promise<void> => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
-    }
+    WebBrowser.maybeCompleteAuthSession();
+    const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
+    const redirectUri = AuthSession.makeRedirectUri({});
+    const authRequest = new AuthSession.AuthRequest({
+      clientId: GOOGLE_CLIENT_ID,
+      redirectUri,
+      responseType: AuthSession.ResponseType.IdToken,
+      scopes: ['openid', 'profile', 'email'],
+    });
+    const result = await authRequest.promptAsync(discovery as any);
+    if (result.type !== 'success' || !result.params.id_token) throw new Error('Google sign-in canceled');
+    const res = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: result.params.id_token }),
+    });
+    if (!res.ok) throw new Error('Google sign-in failed');
+    const { customToken } = await res.json();
+    await signInWithCustomToken(auth, customToken);
   };
 
-  const signOut = async (): Promise<void> => {
+  const signUserOut = async (): Promise<void> => {
     try {
-      await firebaseSignOut(auth);
+      await signOut(auth);
       setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -131,10 +192,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     user,
     loading,
-    signUp,
-    signIn,
+    signUpWithEmail,
+    signInWithEmail,
+    startPhoneVerification,
+    verifyOTP,
+    signInWithApple,
     signInWithGoogle,
-    signOut,
+    signOut: signUserOut,
     updateUser,
   };
 

@@ -5,13 +5,13 @@ import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
 // Firebase configuration
-const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "mint-trade-gh.firebaseapp.com",
-  projectId: "mint-trade-gh",
-  storageBucket: "mint-trade-gh.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+export const firebaseConfig = {
+  apiKey: "AIzaSyAD5LtDxB5tI8EwiyfRB-RdCJOUqGnxD8A",
+  authDomain: "trustmint-73687187-f32e6.firebaseapp.com",
+  projectId: "trustmint-73687187-f32e6",
+  storageBucket: "trustmint-73687187-f32e6.firebasestorage.app",
+  messagingSenderId: "657565253063",
+  appId: "1:657565253063:web:8dea4de6f0a26ac82c6de2"
 };
 
 // Initialize Firebase

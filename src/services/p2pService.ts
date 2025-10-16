@@ -57,10 +57,8 @@ export class P2PService {
         createdAt: serverTimestamp(),
       });
 
-      return {
-        ...qrData,
-        id: qrRef.id,
-      };
+      // QRCodeData type does not include id; return same shape
+      return qrData;
     } catch (error) {
       console.error('Error generating payment QR code:', error);
       throw error;
@@ -345,35 +343,27 @@ export class P2PService {
   }
 
   // Search users by phone or username
-  async searchUsers(query: string): Promise<{ id: string; displayName: string; phoneNumber?: string; username?: string }[]> {
+  async searchUsers(searchQuery: string): Promise<{ id: string; displayName: string; phoneNumber?: string; username?: string }[]> {
     try {
-      // Mock user search - in real app, this would query user profiles
-      const mockUsers = [
-        {
-          id: 'user1',
-          displayName: 'John Doe',
-          phoneNumber: '+233XXXXXXXXX',
-          username: 'john_doe',
-        },
-        {
-          id: 'user2',
-          displayName: 'Jane Smith',
-          phoneNumber: '+233YYYYYYYYY',
-          username: 'jane_smith',
-        },
-        {
-          id: 'user3',
-          displayName: 'Kwame Asante',
-          phoneNumber: '+233ZZZZZZZZZ',
-          username: 'kwame_asante',
-        },
-      ];
-
-      return mockUsers.filter(user => 
-        user.displayName.toLowerCase().includes(query.toLowerCase()) ||
-        user.username?.toLowerCase().includes(query.toLowerCase()) ||
-        user.phoneNumber?.includes(query)
+      // TODO: Implement actual user search from database
+      // This should query the users collection in Firestore
+      const usersRef = collection(db, 'users');
+      const q = query(
+        usersRef,
+        where('displayName', '>=', searchQuery),
+        where('displayName', '<=', searchQuery + '\uf8ff')
       );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        return {
+          id: doc.id,
+          displayName: data.displayName || data.name || 'Unknown User',
+          phoneNumber: data.phone,
+          username: data.username,
+        };
+      });
     } catch (error) {
       console.error('Error searching users:', error);
       throw error;
@@ -468,17 +458,17 @@ export class P2PService {
   private async checkSenderBalance(userId: string, amount: number): Promise<void> {
     // This would check the user's wallet balance
     // For now, we'll assume sufficient balance
-    console.log(`Checking balance for user ${userId}: ${amount}`);
+    // Check user balance
   }
 
   private async updateWalletBalance(userId: string, amount: number): Promise<void> {
     // This would update the user's wallet balance
-    console.log(`Updating balance for user ${userId}: ${amount}`);
+    // Update user balance
   }
 
   private async createTransactionRecords(transferId: string, transferData: Omit<P2PTransfer, 'id' | 'createdAt' | 'status'>): Promise<void> {
     // Create transaction records for both sender and recipient
-    console.log(`Creating transaction records for transfer ${transferId}`);
+    // Create transaction records
   }
 
   private generateUniqueAddress(): string {
