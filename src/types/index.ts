@@ -20,15 +20,10 @@ export interface Stock {
   changePercent: number;
   volume: number;
   updatedAt: Date;
-  // Optional fundamental/extended fields used across the app
-  sector?: string;
-  marketCap?: number;
   pe?: number;
   dividend?: number;
-  open?: number;
+  marketCap?: number;
   high?: number;
-  low?: number;
-  previousClose?: number;
   lastUpdated?: Date;
 }
 

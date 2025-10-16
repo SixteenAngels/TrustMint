@@ -1,59 +1,80 @@
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { AuthService } from '../services/authService';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
-const SignUpScreen = () => {
-  const [email, setEmail] = useState('');
+const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const { signUp, signInWithGoogle } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const authService = AuthService.getInstance();
 
-  const handleSignUp = () => {
-    if (password !== confirmPassword) {
-      Alert.alert("Passwords don't match", "Please make sure your passwords match.");
+  const handleSignUp = async () => {
+    if (!name || !phone || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    signUp(email, password, phoneNumber);
+
+    setLoading(true);
+    try {
+      await authService.signUp(name, phone, password);
+    } catch (error: any) {
+      Alert.alert('Sign Up Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Sign Up</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
-        />
-        <Button title="Sign Up" onPress={handleSignUp} />
-        <View style={styles.separator} />
-        <Button title="Continue with Google" onPress={signInWithGoogle} />
-      </View>
+      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.subtitle}>Start your trading journey</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Full Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleSignUp}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+        <Text style={styles.toggleText}>
+          Already have an account? <Text style={styles.toggleTextHighlight}>Sign In</Text>
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -62,41 +83,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    padding: spacing.lg,
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    ...typography.h1,
+    color: colors.textPrimary,
     textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.xxxl,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    backgroundColor: colors.backgroundSecondary,
+    padding: spacing.lg,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+    ...typography.body,
+    ...shadows.card,
   },
-  separator: {
-    marginVertical: 10,
+  button: {
+    backgroundColor: colors.primary,
+    padding: spacing.lg,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: spacing.md,
+    ...shadows.button,
+  },
+  buttonText: {
+    ...typography.h5,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  toggleText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+  },
+  toggleTextHighlight: {
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
 

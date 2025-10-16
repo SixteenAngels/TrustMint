@@ -1,5 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 
 interface PortfolioCardProps {
   totalValue: number;
@@ -35,7 +39,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
       <View style={styles.gainContainer}>
         <Text style={[
           styles.dayGain,
-          { color: dayGain >= 0 ? '#34C759' : '#FF3B30' }
+          { color: dayGain >= 0 ? colors.success : colors.error }
         ]}>
           {formatCurrency(dayGain)} ({formatPercent(dayGainPercent)})
         </Text>
@@ -47,48 +51,41 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    margin: 20,
-    padding: 20,
+    backgroundColor: colors.backgroundSecondary,
+    margin: spacing.lg,
+    padding: spacing.lg,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadows.card,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    ...typography.body,
+    color: colors.textSecondary,
   },
   balance: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
   totalValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
+    ...typography.h1,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   gainContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   dayGain: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
+    ...typography.h5,
+    marginRight: spacing.sm,
   },
   dayGainLabel: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
 });

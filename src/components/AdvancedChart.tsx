@@ -8,7 +8,8 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import {
+import V from 'victory-native';
+const {
   VictoryChart,
   VictoryLine,
   VictoryArea,
@@ -20,7 +21,7 @@ import {
   VictoryBrushContainer,
   VictoryTheme,
   VictoryLabel,
-} from 'victory-native';
+} = V;
 import { ChartService } from '../services/chartService';
 import { 
   ChartDataPoint, 
@@ -252,7 +253,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
               tickLabels: { fill: chartTheme.text, fontSize: 12 },
               grid: { stroke: chartTheme.grid, strokeDasharray: '5,5' },
             }}
-            tickFormat={(t) => chartService.formatPrice(t)}
+            tickFormat={(t: number) => chartService.formatPrice(t)}
           />
           <VictoryAxis
             style={{
@@ -260,7 +261,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
               tickLabels: { fill: chartTheme.text, fontSize: 12 },
               grid: { stroke: chartTheme.grid, strokeDasharray: '5,5' },
             }}
-            tickFormat={(t) => new Date(t).toLocaleDateString()}
+            tickFormat={(t: number | Date) => new Date(t).toLocaleDateString()}
           />
 
           {/* Main Chart Data */}

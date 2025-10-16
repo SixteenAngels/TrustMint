@@ -89,8 +89,8 @@ export class AIService {
       const victoryData = chartService.convertToVictoryData(chartData);
       
       // Calculate technical indicators
-      const rsi = chartService.calculateRSI(victoryData, 14);
-      const macd = chartService.calculateMACD(victoryData, 12, 26, 9);
+      const rsi: { data: { x: any; y: any; }[]; } = chartService.calculateRSI(victoryData, 14);
+      const macd: { macdLine: { x: any; y: any; }[]; signalLine: { x: any; y: any; }[]; } = chartService.calculateMACD(victoryData, 12, 26, 9);
       const sma20 = chartService.calculateSMA(victoryData, 20);
       const sma50 = chartService.calculateSMA(victoryData, 50);
 

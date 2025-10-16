@@ -27,6 +27,7 @@ export interface P2PTransfer {
 }
 
 export interface QRCodeData {
+  id?: string;
   type: 'payment_request' | 'wallet_address' | 'contact_info';
   data: {
     amount?: number;

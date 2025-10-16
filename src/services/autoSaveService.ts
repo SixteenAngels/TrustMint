@@ -10,23 +10,9 @@ import {
   SAVINGS_PERCENTAGES,
   FIXED_SAVINGS_AMOUNTS
 } from '../types/savings';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp,
-  increment,
-  arrayUnion
-} from 'firebase/firestore';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class AutoSaveService {
   private static instance: AutoSaveService;
@@ -41,12 +27,12 @@ export class AutoSaveService {
   // Create auto-save rule
   async createAutoSaveRule(ruleData: Omit<AutoSaveRule, 'id' | 'createdAt' | 'updatedAt' | 'totalSaved' | 'transactionCount'>): Promise<string> {
     try {
-      const ruleRef = await addDoc(collection(db, 'autoSaveRules'), {
+      const ruleRef = await db.collection('autoSaveRules').add({
         ...ruleData,
         totalSaved: 0,
         transactionCount: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return ruleRef.id;
@@ -59,15 +45,13 @@ export class AutoSaveService {
   // Get user's auto-save rules
   async getAutoSaveRules(userId: string): Promise<AutoSaveRule[]> {
     try {
-      const rulesQuery = query(
-        collection(db, 'autoSaveRules'),
-        where('userId', '==', userId),
-        where('isActive', '==', true),
-        orderBy('priority', 'desc'),
-        orderBy('createdAt', 'desc')
-      );
+      const rulesQuery = db.collection('autoSaveRules')
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .orderBy('priority', 'desc')
+        .orderBy('createdAt', 'desc');
 
-      const snapshot = await getDocs(rulesQuery);
+      const snapshot = await rulesQuery.get();
       
       return snapshot.docs.map(doc => {
         const data = doc.data();
@@ -88,9 +72,9 @@ export class AutoSaveService {
   // Update auto-save rule
   async updateAutoSaveRule(ruleId: string, updates: Partial<AutoSaveRule>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'autoSaveRules', ruleId), {
+      await db.collection('autoSaveRules').doc(ruleId).update({
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating auto-save rule:', error);
@@ -101,9 +85,9 @@ export class AutoSaveService {
   // Delete auto-save rule
   async deleteAutoSaveRule(ruleId: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'autoSaveRules', ruleId), {
+      await db.collection('autoSaveRules').doc(ruleId).update({
         isActive: false,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error deleting auto-save rule:', error);
@@ -187,16 +171,16 @@ export class AutoSaveService {
         },
       };
 
-      const roundUpRef = await addDoc(collection(db, 'roundUpTransactions'), {
+      const roundUpRef = await db.collection('roundUpTransactions').add({
         ...roundUpData,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update auto-save rule stats
-      await updateDoc(doc(db, 'autoSaveRules', rule.id), {
-        totalSaved: increment(roundUpAmount),
-        transactionCount: increment(1),
-        lastTriggered: serverTimestamp(),
+      await db.collection('autoSaveRules').doc(rule.id).update({
+        totalSaved: firestore.FieldValue.increment(roundUpAmount),
+        transactionCount: firestore.FieldValue.increment(1),
+        lastTriggered: firestore.FieldValue.serverTimestamp(),
       });
 
       return {
@@ -213,15 +197,15 @@ export class AutoSaveService {
   // Process round-up transaction
   async processRoundUpTransaction(roundUpId: string): Promise<void> {
     try {
-      const roundUpDoc = await getDoc(doc(db, 'roundUpTransactions', roundUpId));
-      if (!roundUpDoc.exists()) {
+      const roundUpDoc = await db.collection('roundUpTransactions').doc(roundUpId).get();
+      if (!roundUpDoc.exists) {
         throw new Error('Round-up transaction not found');
       }
 
       const roundUpData = roundUpDoc.data() as RoundUpTransaction;
       
       // Update status to processing
-      await updateDoc(doc(db, 'roundUpTransactions', roundUpId), {
+      await db.collection('roundUpTransactions').doc(roundUpId).update({
         status: 'processing',
       });
 
@@ -229,13 +213,13 @@ export class AutoSaveService {
       await this.processRoundUpDestination(roundUpData);
 
       // Update status to completed
-      await updateDoc(doc(db, 'roundUpTransactions', roundUpId), {
+      await db.collection('roundUpTransactions').doc(roundUpId).update({
         status: 'completed',
-        completedAt: serverTimestamp(),
+        completedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       // Mark as failed
-      await updateDoc(doc(db, 'roundUpTransactions', roundUpId), {
+      await db.collection('roundUpTransactions').doc(roundUpId).update({
         status: 'failed',
       });
       console.error('Error processing round-up transaction:', error);
@@ -247,8 +231,8 @@ export class AutoSaveService {
   private async processRoundUpDestination(roundUp: RoundUpTransaction): Promise<void> {
     try {
       // Get the auto-save rule to determine destination type
-      const ruleDoc = await getDoc(doc(db, 'autoSaveRules', roundUp.autoSaveRuleId));
-      if (!ruleDoc.exists()) {
+      const ruleDoc = await db.collection('autoSaveRules').doc(roundUp.autoSaveRuleId).get();
+      if (!ruleDoc.exists) {
         throw new Error('Auto-save rule not found');
       }
 
@@ -274,10 +258,10 @@ export class AutoSaveService {
   // Add to savings account
   private async addToSavingsAccount(accountId: string, amount: number): Promise<void> {
     try {
-      await updateDoc(doc(db, 'savingsAccounts', accountId), {
-        balance: increment(amount),
-        totalDeposits: increment(amount),
-        lastActivity: serverTimestamp(),
+      await db.collection('savingsAccounts').doc(accountId).update({
+        balance: firestore.FieldValue.increment(amount),
+        totalDeposits: firestore.FieldValue.increment(amount),
+        lastActivity: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error adding to savings account:', error);
@@ -310,12 +294,12 @@ export class AutoSaveService {
   // Create savings account
   async createSavingsAccount(accountData: Omit<SavingsAccount, 'id' | 'createdAt' | 'totalDeposits' | 'totalWithdrawals' | 'totalInterest'>): Promise<string> {
     try {
-      const accountRef = await addDoc(collection(db, 'savingsAccounts'), {
+      const accountRef = await db.collection('savingsAccounts').add({
         ...accountData,
         totalDeposits: 0,
         totalWithdrawals: 0,
         totalInterest: 0,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return accountRef.id;
@@ -328,14 +312,12 @@ export class AutoSaveService {
   // Get user's savings accounts
   async getSavingsAccounts(userId: string): Promise<SavingsAccount[]> {
     try {
-      const accountsQuery = query(
-        collection(db, 'savingsAccounts'),
-        where('userId', '==', userId),
-        where('isActive', '==', true),
-        orderBy('createdAt', 'desc')
-      );
+      const accountsQuery = db.collection('savingsAccounts')
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .orderBy('createdAt', 'desc');
 
-      const snapshot = await getDocs(accountsQuery);
+      const snapshot = await accountsQuery.get();
       
       return snapshot.docs.map(doc => {
         const data = doc.data();
@@ -355,12 +337,12 @@ export class AutoSaveService {
   // Create savings goal
   async createSavingsGoal(goalData: Omit<SavingsGoal, 'id' | 'createdAt' | 'updatedAt' | 'progress' | 'isCompleted'>): Promise<string> {
     try {
-      const goalRef = await addDoc(collection(db, 'savingsGoals'), {
+      const goalRef = await db.collection('savingsGoals').add({
         ...goalData,
         progress: 0,
         isCompleted: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return goalRef.id;
@@ -373,15 +355,13 @@ export class AutoSaveService {
   // Get user's savings goals
   async getSavingsGoals(userId: string): Promise<SavingsGoal[]> {
     try {
-      const goalsQuery = query(
-        collection(db, 'savingsGoals'),
-        where('userId', '==', userId),
-        where('isActive', '==', true),
-        orderBy('priority', 'desc'),
-        orderBy('createdAt', 'desc')
-      );
+      const goalsQuery = db.collection('savingsGoals')
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .orderBy('priority', 'desc')
+        .orderBy('createdAt', 'desc');
 
-      const snapshot = await getDocs(goalsQuery);
+      const snapshot = await goalsQuery.get();
       
       return snapshot.docs.map(doc => {
         const data = doc.data();
@@ -403,9 +383,9 @@ export class AutoSaveService {
   // Add contribution to goal
   async addGoalContribution(contributionData: Omit<GoalContribution, 'id' | 'createdAt'>): Promise<string> {
     try {
-      const contributionRef = await addDoc(collection(db, 'goalContributions'), {
+      const contributionRef = await db.collection('goalContributions').add({
         ...contributionData,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update goal progress
@@ -421,8 +401,8 @@ export class AutoSaveService {
   // Update goal progress
   private async updateGoalProgress(goalId: string, amount: number): Promise<void> {
     try {
-      const goalDoc = await getDoc(doc(db, 'savingsGoals', goalId));
-      if (!goalDoc.exists()) {
+      const goalDoc = await db.collection('savingsGoals').doc(goalId).get();
+      if (!goalDoc.exists) {
         throw new Error('Savings goal not found');
       }
 
@@ -431,12 +411,12 @@ export class AutoSaveService {
       const progress = Math.min((newCurrentAmount / goalData.targetAmount) * 100, 100);
       const isCompleted = newCurrentAmount >= goalData.targetAmount;
 
-      await updateDoc(doc(db, 'savingsGoals', goalId), {
+      await db.collection('savingsGoals').doc(goalId).update({
         currentAmount: newCurrentAmount,
         progress,
         isCompleted,
-        completedAt: isCompleted ? serverTimestamp() : null,
-        updatedAt: serverTimestamp(),
+        completedAt: isCompleted ? firestore.FieldValue.serverTimestamp() : null,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating goal progress:', error);
@@ -452,14 +432,12 @@ export class AutoSaveService {
       const startDate = this.getStartDate(now, period);
 
       // Get round-up transactions
-      const roundUpQuery = query(
-        collection(db, 'roundUpTransactions'),
-        where('userId', '==', userId),
-        where('createdAt', '>=', startDate),
-        where('status', '==', 'completed')
-      );
+      const roundUpQuery = db.collection('roundUpTransactions')
+        .where('userId', '==', userId)
+        .where('createdAt', '>=', startDate)
+        .where('status', '==', 'completed');
 
-      const roundUpSnapshot = await getDocs(roundUpQuery);
+      const roundUpSnapshot = await roundUpQuery.get();
       const roundUpTransactions = roundUpSnapshot.docs.map(doc => doc.data() as RoundUpTransaction);
 
       // Calculate analytics
@@ -599,15 +577,13 @@ export class AutoSaveService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const dailyQuery = query(
-        collection(db, 'roundUpTransactions'),
-        where('userId', '==', userId),
-        where('autoSaveRuleId', '==', ruleId),
-        where('createdAt', '>=', today),
-        where('status', '==', 'completed')
-      );
+      const dailyQuery = db.collection('roundUpTransactions')
+        .where('userId', '==', userId)
+        .where('autoSaveRuleId', '==', ruleId)
+        .where('createdAt', '>=', today)
+        .where('status', '==', 'completed');
 
-      const snapshot = await getDocs(dailyQuery);
+      const snapshot = await dailyQuery.get();
       return snapshot.docs.reduce((sum, doc) => sum + doc.data().roundUpAmount, 0);
     } catch (error) {
       console.error('Error getting daily saved amount:', error);

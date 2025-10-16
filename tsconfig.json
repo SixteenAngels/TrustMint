@@ -8,10 +8,12 @@
         "src/*"
       ]
     },
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "jsx": "react-jsx"
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "src/types/declarations.d.ts"
   ]
 }

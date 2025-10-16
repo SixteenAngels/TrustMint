@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
       shadowOffset: { width: 0, height: -1 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
-    } : shadows.header),
+    } : shadows.card),
   },
   tabBar: {
     flexDirection: 'row',

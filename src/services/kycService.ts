@@ -1,10 +1,10 @@
-import { 
-  KYCProfile, 
-  KYCDocument, 
-  KYCStep, 
-  PersonalInfo, 
-  AddressInfo, 
-  EmploymentInfo, 
+import {
+  KYCProfile,
+  KYCDocument,
+  KYCStep,
+  PersonalInfo,
+  AddressInfo,
+  EmploymentInfo,
   FinancialInfo,
   BiometricData,
   ComplianceCheck,
@@ -15,21 +15,9 @@ import {
   KYC_STEPS,
   DOCUMENT_TYPES
 } from '../types/kyc';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp 
-} from 'firebase/firestore';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class KYCService {
   private static instance: KYCService;
@@ -65,7 +53,7 @@ export class KYCService {
           ...step,
           status: 'pending',
           retryCount: 0,
-          maxRetries: 3,
+          maxRetries: 3, // Added maxRetries
         })),
         personalInfo: {
           firstName: '',
@@ -101,10 +89,10 @@ export class KYCService {
         verificationMethod: 'smile_id',
       };
 
-      const kycRef = await addDoc(collection(db, 'kycProfiles'), {
+      const kycRef = await db.collection('kycProfiles').add({
         ...kycData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return kycRef.id;
@@ -117,13 +105,11 @@ export class KYCService {
   // Get KYC profile
   async getKYCProfile(userId: string): Promise<KYCProfile | null> {
     try {
-      const kycQuery = query(
-        collection(db, 'kycProfiles'),
-        where('userId', '==', userId),
-        limit(1)
-      );
+      const kycQuery = db.collection('kycProfiles')
+        .where('userId', '==', userId)
+        .limit(1);
 
-      const snapshot = await getDocs(kycQuery);
+      const snapshot = await kycQuery.get();
       
       if (snapshot.empty) {
         return null;
@@ -211,9 +197,9 @@ export class KYCService {
   // Update KYC profile
   async updateKYCProfile(profileId: string, updates: Partial<KYCProfile>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'kycProfiles', profileId), {
+      await db.collection('kycProfiles').doc(profileId).update({
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating KYC profile:', error);
@@ -224,9 +210,9 @@ export class KYCService {
   // Update personal information
   async updatePersonalInfo(profileId: string, personalInfo: Partial<PersonalInfo>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'kycProfiles', profileId), {
+      await db.collection('kycProfiles').doc(profileId).update({
         personalInfo: personalInfo,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating personal info:', error);
@@ -237,9 +223,9 @@ export class KYCService {
   // Update address information
   async updateAddressInfo(profileId: string, addressInfo: Partial<AddressInfo>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'kycProfiles', profileId), {
+      await db.collection('kycProfiles').doc(profileId).update({
         addressInfo: addressInfo,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating address info:', error);
@@ -253,20 +239,20 @@ export class KYCService {
     documentData: Omit<KYCDocument, 'id' | 'uploadedAt' | 'verifiedAt'>
   ): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, 'kycDocuments'), {
+      const docRef = await db.collection('kycDocuments').add({
         ...documentData,
-        uploadedAt: serverTimestamp(),
+        uploadedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update profile with document reference
-      const profileDoc = await getDoc(doc(db, 'kycProfiles', profileId));
-      if (profileDoc.exists()) {
+      const profileDoc = await db.collection('kycProfiles').doc(profileId).get();
+      if (profileDoc.exists) {
         const profile = profileDoc.data() as KYCProfile;
         const updatedDocuments = [...profile.documents, { ...documentData, id: docRef.id }];
         
-        await updateDoc(doc(db, 'kycProfiles', profileId), {
+        await db.collection('kycProfiles').doc(profileId).update({
           documents: updatedDocuments,
-          updatedAt: serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
         });
       }
 
@@ -340,10 +326,10 @@ export class KYCService {
         maxRetries: 3,
       };
 
-      await addDoc(collection(db, 'smileIDJobs'), {
+      await db.collection('smileIDJobs').add({
         ...smileIDJob,
-        createdAt: serverTimestamp(),
-        completedAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        completedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update document status
@@ -364,8 +350,8 @@ export class KYCService {
     result?: SmileIDResult
   ): Promise<void> {
     try {
-      const profileDoc = await getDoc(doc(db, 'kycProfiles', profileId));
-      if (profileDoc.exists()) {
+      const profileDoc = await db.collection('kycProfiles').doc(profileId).get();
+      if (profileDoc.exists) {
         const profile = profileDoc.data() as KYCProfile;
         const updatedDocuments = profile.documents.map(doc => 
           doc.id === documentId 
@@ -375,7 +361,6 @@ export class KYCService {
                 verifiedAt: new Date(),
                 metadata: result ? {
                   confidence: result.confidence,
-                  quality: (result.data as any).qualityScore || 0,
                   faceMatch: result.data.faceMatch,
                   livenessCheck: result.data.livenessCheck,
                 } : doc.metadata
@@ -383,9 +368,9 @@ export class KYCService {
             : doc
         );
         
-        await updateDoc(doc(db, 'kycProfiles', profileId), {
+        await db.collection('kycProfiles').doc(profileId).update({
           documents: updatedDocuments,
-          updatedAt: serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
         });
       }
     } catch (error) {
@@ -397,8 +382,8 @@ export class KYCService {
   // Complete KYC step
   async completeKYCStep(profileId: string, stepId: string): Promise<void> {
     try {
-      const profileDoc = await getDoc(doc(db, 'kycProfiles', profileId));
-      if (profileDoc.exists()) {
+      const profileDoc = await db.collection('kycProfiles').doc(profileId).get();
+      if (profileDoc.exists) {
         const profile = profileDoc.data() as KYCProfile;
         const updatedSteps = profile.verificationSteps.map(step => 
           step.id === stepId 
@@ -406,9 +391,9 @@ export class KYCService {
             : step
         );
         
-        await updateDoc(doc(db, 'kycProfiles', profileId), {
+        await db.collection('kycProfiles').doc(profileId).update({
           verificationSteps: updatedSteps,
-          updatedAt: serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
         });
       }
     } catch (error) {
@@ -420,8 +405,8 @@ export class KYCService {
   // Run compliance checks
   async runComplianceChecks(profileId: string): Promise<ComplianceCheck[]> {
     try {
-      const profileDoc = await getDoc(doc(db, 'kycProfiles', profileId));
-      if (!profileDoc.exists()) {
+      const profileDoc = await db.collection('kycProfiles').doc(profileId).get();
+      if (!profileDoc.exists) {
         throw new Error('KYC profile not found');
       }
 
@@ -445,9 +430,9 @@ export class KYCService {
       complianceChecks.push(adverseMediaCheck);
 
       // Update profile with compliance checks
-      await updateDoc(doc(db, 'kycProfiles', profileId), {
+      await db.collection('kycProfiles').doc(profileId).update({
         complianceChecks: complianceChecks,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return complianceChecks;
@@ -540,8 +525,8 @@ export class KYCService {
   // Calculate risk score
   async calculateRiskScore(profileId: string): Promise<{ score: number; level: 'low' | 'medium' | 'high' }> {
     try {
-      const profileDoc = await getDoc(doc(db, 'kycProfiles', profileId));
-      if (!profileDoc.exists()) {
+      const profileDoc = await db.collection('kycProfiles').doc(profileId).get();
+      if (!profileDoc.exists) {
         throw new Error('KYC profile not found');
       }
 
@@ -582,10 +567,10 @@ export class KYCService {
       }
 
       // Update profile with risk score
-      await updateDoc(doc(db, 'kycProfiles', profileId), {
+      await db.collection('kycProfiles').doc(profileId).update({
         riskScore: Math.min(riskScore, 100),
         riskLevel: riskLevel,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return { score: Math.min(riskScore, 100), level: riskLevel };

@@ -1,13 +1,15 @@
 import React from 'react';
-import { Text, StyleSheet, Platform } from 'react-native';
+import { Text, StyleSheet, Platform, StyleProp, TextStyle } from 'react-native';
 import { colors } from '../styles/colors';
+
+type FontWeight = 'light' | 'regular' | 'medium' | 'semibold' | 'bold';
 
 interface SFSymbolProps {
   name: string;
   size?: number;
   color?: string;
-  weight?: 'light' | 'regular' | 'medium' | 'semibold' | 'bold';
-  style?: any;
+  weight?: FontWeight;
+  style?: StyleProp<TextStyle>;
 }
 
 // SF Symbols fallback mapping for React Native
@@ -80,6 +82,7 @@ const SF_SYMBOLS_MAP: { [key: string]: string } = {
   'exclamationmark.triangle.fill': '⚠️',
   'checkmark.circle': '✅',
   'checkmark.circle.fill': '✅',
+  'xmark': '❌',
   'xmark.circle': '❌',
   'xmark.circle.fill': '❌',
   
@@ -262,7 +265,7 @@ export const SFSymbol: React.FC<SFSymbolProps> = ({
   );
 };
 
-const getFontWeight = (weight: string): string => {
+const getFontWeight = (weight: FontWeight): '300' | '400' | '500' | '600' | '700' => {
   switch (weight) {
     case 'light': return '300';
     case 'regular': return '400';

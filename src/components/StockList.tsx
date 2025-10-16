@@ -4,7 +4,6 @@ import { Stock } from '../types';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
-import { getStatusColor, getStatusBackground } from '../styles/colors';
 
 interface StockListProps {
   stocks: Stock[];
@@ -31,8 +30,8 @@ export const StockList: React.FC<StockListProps> = ({
   const renderStockItem = (stock: Stock, index: number) => {
     const quantity = quantities[index] || 0;
     const isPositive = stock.change >= 0;
-    const statusColor = getStatusColor(isPositive);
-    const statusBackground = getStatusBackground(isPositive);
+    const statusColor = isPositive ? colors.success : colors.error;
+    const statusBackground = isPositive ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 59, 48, 0.1)';
     
     return (
       <TouchableOpacity
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   change: {
-    ...typography.captionMedium,
+    ...typography.caption,
     fontWeight: '600',
   },
   emptyContainer: {

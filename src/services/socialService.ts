@@ -14,23 +14,9 @@ import {
   SocialTradingSettings,
   Badge
 } from '../types/social';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  startAfter,
-  serverTimestamp,
-  Timestamp
-} from 'firebase/firestore';
+import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class SocialService {
   private static instance: SocialService;
@@ -45,11 +31,11 @@ export class SocialService {
   // User Profile Management
   async createUserProfile(userId: string, profileData: Partial<UserProfile>): Promise<string> {
     try {
-      const profileRef = await addDoc(collection(db, 'userProfiles'), {
+      const profileRef = await db.collection('userProfiles').add({
         ...profileData,
         userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
       return profileRef.id;
     } catch (error) {
@@ -60,11 +46,7 @@ export class SocialService {
 
   async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
-      const profileQuery = query(
-        collection(db, 'userProfiles'),
-        where('userId', '==', userId)
-      );
-      const snapshot = await getDocs(profileQuery);
+      const snapshot = await db.collection('userProfiles').where('userId', '==', userId).get();
       
       if (snapshot.empty) return null;
       
@@ -74,12 +56,12 @@ export class SocialService {
       return {
         id: doc.id,
         ...data,
-        joinDate: data.joinDate?.toDate() || new Date(),
+        joinDate: data.joinDate || new Date(),
         stats: {
           ...data.stats,
-          badges: data.stats?.badges?.map((badge: any) => ({
+          badges: data.stats?.badges?.map((badge: Badge) => ({
             ...badge,
-            earnedDate: badge.earnedDate?.toDate() || new Date(),
+            earnedDate: badge.earnedDate || new Date(),
           })) || [],
         },
       } as UserProfile;
@@ -91,20 +73,16 @@ export class SocialService {
 
   async updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<void> {
     try {
-      const profileQuery = query(
-        collection(db, 'userProfiles'),
-        where('userId', '==', userId)
-      );
-      const snapshot = await getDocs(profileQuery);
+      const snapshot = await db.collection('userProfiles').where('userId', '==', userId).get();
       
       if (snapshot.empty) {
         throw new Error('User profile not found');
       }
       
-      const profileRef = doc(db, 'userProfiles', snapshot.docs[0].id);
-      await updateDoc(profileRef, {
+      const profileRef = db.collection('userProfiles').doc(snapshot.docs[0].id);
+      await profileRef.update({
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -121,10 +99,10 @@ export class SocialService {
         throw new Error('Already following this user');
       }
 
-      const followRef = await addDoc(collection(db, 'follows'), {
+      const followRef = await db.collection('follows').add({
         followerId,
         followingId,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
         status: 'active',
       });
 
@@ -146,7 +124,7 @@ export class SocialService {
         throw new Error('Not following this user');
       }
 
-      await deleteDoc(doc(db, 'follows', follow.id));
+      await db.collection('follows').doc(follow.id).delete();
 
       // Update follower counts
       await this.updateFollowerCount(followingId, -1);
@@ -159,13 +137,11 @@ export class SocialService {
 
   async getFollow(followerId: string, followingId: string): Promise<Follow | null> {
     try {
-      const followQuery = query(
-        collection(db, 'follows'),
-        where('followerId', '==', followerId),
-        where('followingId', '==', followingId),
-        where('status', '==', 'active')
-      );
-      const snapshot = await getDocs(followQuery);
+      const snapshot = await db.collection('follows')
+        .where('followerId', '==', followerId)
+        .where('followingId', '==', followingId)
+        .where('status', '==', 'active')
+        .get();
       
       if (snapshot.empty) return null;
       
@@ -185,16 +161,14 @@ export class SocialService {
 
   async getFollowers(userId: string, limitCount: number = 20): Promise<UserProfile[]> {
     try {
-      const followsQuery = query(
-        collection(db, 'follows'),
-        where('followingId', '==', userId),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(followsQuery);
+      const snapshot = await db.collection('follows')
+        .where('followingId', '==', userId)
+        .where('status', '==', 'active')
+        .orderBy('createdAt', 'desc')
+        .limit(limitCount)
+        .get();
       
-      const followerIds = snapshot.docs.map(doc => doc.data().followerId);
+      const followerIds = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data().followerId);
       const profiles: UserProfile[] = [];
       
       for (const followerId of followerIds) {
@@ -211,16 +185,14 @@ export class SocialService {
 
   async getFollowing(userId: string, limitCount: number = 20): Promise<UserProfile[]> {
     try {
-      const followsQuery = query(
-        collection(db, 'follows'),
-        where('followerId', '==', userId),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(followsQuery);
+      const snapshot = await db.collection('follows')
+        .where('followerId', '==', userId)
+        .where('status', '==', 'active')
+        .orderBy('createdAt', 'desc')
+        .limit(limitCount)
+        .get();
       
-      const followingIds = snapshot.docs.map(doc => doc.data().followingId);
+      const followingIds = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data().followingId);
       const profiles: UserProfile[] = [];
       
       for (const followingId of followingIds) {
@@ -238,9 +210,9 @@ export class SocialService {
   // Trade Alerts
   async createTradeAlert(alertData: Omit<TradeAlert, 'id' | 'timestamp' | 'likes' | 'comments' | 'shares'>): Promise<string> {
     try {
-      const alertRef = await addDoc(collection(db, 'tradeAlerts'), {
+      const alertRef = await db.collection('tradeAlerts').add({
         ...alertData,
-        timestamp: serverTimestamp(),
+        timestamp: firestore.FieldValue.serverTimestamp(),
         likes: 0,
         comments: 0,
         shares: 0,
@@ -254,28 +226,22 @@ export class SocialService {
 
   async getTradeAlerts(userId?: string, limitCount: number = 20): Promise<TradeAlert[]> {
     try {
-      let alertsQuery;
+      let alertsQuery = db.collection('tradeAlerts')
+          .where('isPublic', '==', true)
+          .orderBy('timestamp', 'desc')
+          .limit(limitCount);
       
       if (userId) {
-        alertsQuery = query(
-          collection(db, 'tradeAlerts'),
-          where('userId', '==', userId),
-          where('isPublic', '==', true),
-          orderBy('timestamp', 'desc'),
-          limit(limitCount)
-        );
-      } else {
-        alertsQuery = query(
-          collection(db, 'tradeAlerts'),
-          where('isPublic', '==', true),
-          orderBy('timestamp', 'desc'),
-          limit(limitCount)
-        );
+        alertsQuery = db.collection('tradeAlerts')
+          .where('userId', '==', userId)
+          .where('isPublic', '==', true)
+          .orderBy('timestamp', 'desc')
+          .limit(limitCount)
       }
       
-      const snapshot = await getDocs(alertsQuery);
+      const snapshot = await alertsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -296,17 +262,14 @@ export class SocialService {
       const followingIds = following.map(user => user.id);
       
       // Get trade alerts from following users
-      const alertsQuery = query(
-        collection(db, 'tradeAlerts'),
-        where('userId', 'in', followingIds),
-        where('isPublic', '==', true),
-        orderBy('timestamp', 'desc'),
-        limit(limitCount)
-      );
+      const snapshot = await db.collection('tradeAlerts')
+        .where('userId', 'in', followingIds)
+        .where('isPublic', '==', true)
+        .orderBy('timestamp', 'desc')
+        .limit(limitCount)
+        .get();
       
-      const snapshot = await getDocs(alertsQuery);
-      
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -323,9 +286,9 @@ export class SocialService {
   // Copy Trading
   async createCopyTrade(copyTradeData: Omit<CopyTrade, 'id' | 'timestamp' | 'status' | 'profit'>): Promise<string> {
     try {
-      const copyTradeRef = await addDoc(collection(db, 'copyTrades'), {
+      const copyTradeRef = await db.collection('copyTrades').add({
         ...copyTradeData,
-        timestamp: serverTimestamp(),
+        timestamp: firestore.FieldValue.serverTimestamp(),
         status: 'pending',
         profit: 0,
       });
@@ -338,16 +301,13 @@ export class SocialService {
 
   async getCopyTrades(userId: string, limitCount: number = 20): Promise<CopyTrade[]> {
     try {
-      const copyTradesQuery = query(
-        collection(db, 'copyTrades'),
-        where('copierId', '==', userId),
-        orderBy('timestamp', 'desc'),
-        limit(limitCount)
-      );
+      const snapshot = await db.collection('copyTrades')
+        .where('copierId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(limitCount)
+        .get();
       
-      const snapshot = await getDocs(copyTradesQuery);
-      
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -376,9 +336,9 @@ export class SocialService {
   // Messaging
   async sendDirectMessage(messageData: Omit<DirectMessage, 'id' | 'timestamp' | 'isRead'>): Promise<string> {
     try {
-      const messageRef = await addDoc(collection(db, 'directMessages'), {
+      const messageRef = await db.collection('directMessages').add({
         ...messageData,
-        timestamp: serverTimestamp(),
+        timestamp: firestore.FieldValue.serverTimestamp(),
         isRead: false,
       });
       return messageRef.id;
@@ -390,17 +350,14 @@ export class SocialService {
 
   async getDirectMessages(userId: string, otherUserId: string, limitCount: number = 50): Promise<DirectMessage[]> {
     try {
-      const messagesQuery = query(
-        collection(db, 'directMessages'),
-        where('senderId', 'in', [userId, otherUserId]),
-        where('recipientId', 'in', [userId, otherUserId]),
-        orderBy('timestamp', 'desc'),
-        limit(limitCount)
-      );
+      const snapshot = await db.collection('directMessages')
+        .where('senderId', 'in', [userId, otherUserId])
+        .where('recipientId', 'in', [userId, otherUserId])
+        .orderBy('timestamp', 'desc')
+        .limit(limitCount)
+        .get();
       
-      const snapshot = await getDocs(messagesQuery);
-      
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,

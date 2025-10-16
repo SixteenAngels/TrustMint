@@ -48,7 +48,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <Text style={styles.portfolioLabel}>Portfolio Value</Text>
           <View style={[
             styles.changeIndicator,
-            { backgroundColor: isPositive ? colors.successLight : colors.errorLight }
+            { backgroundColor: isPositive ? colors.successLight : 'rgba(255, 59, 48, 0.1)' }
           ]}>
             <Text style={[
               styles.changeText,

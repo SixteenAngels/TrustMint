@@ -4,22 +4,9 @@ import {
   UserVaultInvestment,
   VAULT_CATEGORIES 
 } from '../types/savings';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp,
-  increment
-} from 'firebase/firestore';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class InvestmentVaultService {
   private static instance: InvestmentVaultService;
@@ -34,23 +21,21 @@ export class InvestmentVaultService {
   // Get all available vaults
   async getAvailableVaults(): Promise<InvestmentVault[]> {
     try {
-      const vaultsQuery = query(
-        collection(db, 'investmentVaults'),
-        where('isActive', '==', true),
-        orderBy('isFeatured', 'desc'),
-        orderBy('totalInvestors', 'desc')
-      );
+      const vaultsQuery = db.collection('investmentVaults')
+        .where('isActive', '==', true)
+        .orderBy('isFeatured', 'desc')
+        .orderBy('totalInvestors', 'desc');
 
-      const snapshot = await getDocs(vaultsQuery);
+      const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-          holdings: data.holdings?.map((holding: any) => ({
+          holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
             lastUpdated: holding.lastUpdated?.toDate() || new Date(),
           })) || [],
@@ -65,9 +50,9 @@ export class InvestmentVaultService {
   // Get vault by ID
   async getVaultById(vaultId: string): Promise<InvestmentVault | null> {
     try {
-      const vaultDoc = await getDoc(doc(db, 'investmentVaults', vaultId));
+      const vaultDoc = await db.collection('investmentVaults').doc(vaultId).get();
       
-      if (!vaultDoc.exists()) {
+      if (!vaultDoc.exists) {
         return null;
       }
 
@@ -77,7 +62,7 @@ export class InvestmentVaultService {
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
-        holdings: data.holdings?.map((holding: any) => ({
+        holdings: data.holdings?.map((holding: VaultHolding) => ({
           ...holding,
           lastUpdated: holding.lastUpdated?.toDate() || new Date(),
         })) || [],
@@ -91,23 +76,21 @@ export class InvestmentVaultService {
   // Get vaults by category
   async getVaultsByCategory(category: string): Promise<InvestmentVault[]> {
     try {
-      const vaultsQuery = query(
-        collection(db, 'investmentVaults'),
-        where('category', '==', category),
-        where('isActive', '==', true),
-        orderBy('totalInvestors', 'desc')
-      );
+      const vaultsQuery = db.collection('investmentVaults')
+        .where('category', '==', category)
+        .where('isActive', '==', true)
+        .orderBy('totalInvestors', 'desc');
 
-      const snapshot = await getDocs(vaultsQuery);
+      const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-          holdings: data.holdings?.map((holding: any) => ({
+          holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
             lastUpdated: holding.lastUpdated?.toDate() || new Date(),
           })) || [],
@@ -122,24 +105,22 @@ export class InvestmentVaultService {
   // Get featured vaults
   async getFeaturedVaults(): Promise<InvestmentVault[]> {
     try {
-      const vaultsQuery = query(
-        collection(db, 'investmentVaults'),
-        where('isFeatured', '==', true),
-        where('isActive', '==', true),
-        orderBy('totalInvestors', 'desc'),
-        limit(5)
-      );
+      const vaultsQuery = db.collection('investmentVaults')
+        .where('isFeatured', '==', true)
+        .where('isActive', '==', true)
+        .orderBy('totalInvestors', 'desc')
+        .limit(5);
 
-      const snapshot = await getDocs(vaultsQuery);
+      const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-          holdings: data.holdings?.map((holding: any) => ({
+          holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
             lastUpdated: holding.lastUpdated?.toDate() || new Date(),
           })) || [],
@@ -154,24 +135,22 @@ export class InvestmentVaultService {
   // Get new vaults
   async getNewVaults(): Promise<InvestmentVault[]> {
     try {
-      const vaultsQuery = query(
-        collection(db, 'investmentVaults'),
-        where('isNew', '==', true),
-        where('isActive', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(5)
-      );
+      const vaultsQuery = db.collection('investmentVaults')
+        .where('isNew', '==', true)
+        .where('isActive', '==', true)
+        .orderBy('createdAt', 'desc')
+        .limit(5);
 
-      const snapshot = await getDocs(vaultsQuery);
+      const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
-          holdings: data.holdings?.map((holding: any) => ({
+          holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
             lastUpdated: holding.lastUpdated?.toDate() || new Date(),
           })) || [],
@@ -222,20 +201,20 @@ export class InvestmentVaultService {
         autoInvestEnabled: false,
       };
 
-      const investmentRef = await addDoc(collection(db, 'userVaultInvestments'), {
+      const investmentRef = await db.collection('userVaultInvestments').add({
         ...investmentData,
         currentValue: amount,
         gainLoss: 0,
         gainLossPercentage: 0,
         totalContributions: amount,
         totalWithdrawals: 0,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update vault stats
-      await updateDoc(doc(db, 'investmentVaults', vaultId), {
-        totalInvestors: increment(1),
-        totalAssets: increment(amount),
+      await db.collection('investmentVaults').doc(vaultId).update({
+        totalInvestors: firestore.FieldValue.increment(1),
+        totalAssets: firestore.FieldValue.increment(amount),
       });
 
       return investmentRef.id;
@@ -248,16 +227,14 @@ export class InvestmentVaultService {
   // Get user's vault investments
   async getUserVaultInvestments(userId: string): Promise<UserVaultInvestment[]> {
     try {
-      const investmentsQuery = query(
-        collection(db, 'userVaultInvestments'),
-        where('userId', '==', userId),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc')
-      );
+      const investmentsQuery = db.collection('userVaultInvestments')
+        .where('userId', '==', userId)
+        .where('status', '==', 'active')
+        .orderBy('createdAt', 'desc');
 
-      const snapshot = await getDocs(investmentsQuery);
+      const snapshot = await investmentsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -276,9 +253,9 @@ export class InvestmentVaultService {
   // Get vault investment by ID
   async getVaultInvestmentById(investmentId: string): Promise<UserVaultInvestment | null> {
     try {
-      const investmentDoc = await getDoc(doc(db, 'userVaultInvestments', investmentId));
+      const investmentDoc = await db.collection('userVaultInvestments').doc(investmentId).get();
       
-      if (!investmentDoc.exists()) {
+      if (!investmentDoc.exists) {
         return null;
       }
 
@@ -302,8 +279,8 @@ export class InvestmentVaultService {
     amount: number
   ): Promise<void> {
     try {
-      const investmentDoc = await getDoc(doc(db, 'userVaultInvestments', investmentId));
-      if (!investmentDoc.exists()) {
+      const investmentDoc = await db.collection('userVaultInvestments').doc(investmentId).get();
+      if (!investmentDoc.exists) {
         throw new Error('Investment not found');
       }
 
@@ -311,16 +288,16 @@ export class InvestmentVaultService {
       const newTotalAmount = investment.amount + amount;
       const newShares = (investment.shares * investment.averagePrice + amount) / investment.averagePrice;
 
-      await updateDoc(doc(db, 'userVaultInvestments', investmentId), {
+      await db.collection('userVaultInvestments').doc(investmentId).update({
         amount: newTotalAmount,
         shares: newShares,
-        totalContributions: increment(amount),
-        lastContribution: serverTimestamp(),
+        totalContributions: firestore.FieldValue.increment(amount),
+        lastContribution: firestore.FieldValue.serverTimestamp(),
       });
 
       // Update vault total assets
-      await updateDoc(doc(db, 'investmentVaults', investment.vaultId), {
-        totalAssets: increment(amount),
+      await db.collection('investmentVaults').doc(investment.vaultId).update({
+        totalAssets: firestore.FieldValue.increment(amount),
       });
     } catch (error) {
       console.error('Error adding to vault investment:', error);
@@ -334,8 +311,8 @@ export class InvestmentVaultService {
     amount: number
   ): Promise<void> {
     try {
-      const investmentDoc = await getDoc(doc(db, 'userVaultInvestments', investmentId));
-      if (!investmentDoc.exists()) {
+      const investmentDoc = await db.collection('userVaultInvestments').doc(investmentId).get();
+      if (!investmentDoc.exists) {
         throw new Error('Investment not found');
       }
 
@@ -348,15 +325,15 @@ export class InvestmentVaultService {
       const newAmount = investment.amount - amount;
       const newShares = (investment.shares * investment.averagePrice - amount) / investment.averagePrice;
 
-      await updateDoc(doc(db, 'userVaultInvestments', investmentId), {
+      await db.collection('userVaultInvestments').doc(investmentId).update({
         amount: newAmount,
         shares: newShares,
-        totalWithdrawals: increment(amount),
+        totalWithdrawals: firestore.FieldValue.increment(amount),
       });
 
       // Update vault total assets
-      await updateDoc(doc(db, 'investmentVaults', investment.vaultId), {
-        totalAssets: increment(-amount),
+      await db.collection('investmentVaults').doc(investment.vaultId).update({
+        totalAssets: firestore.FieldValue.increment(-amount),
       });
     } catch (error) {
       console.error('Error withdrawing from vault investment:', error);
@@ -373,7 +350,7 @@ export class InvestmentVaultService {
     try {
       const nextAutoInvest = this.calculateNextAutoInvest(frequency);
 
-      await updateDoc(doc(db, 'userVaultInvestments', investmentId), {
+      await db.collection('userVaultInvestments').doc(investmentId).update({
         autoInvestEnabled: true,
         autoInvestAmount: amount,
         autoInvestFrequency: frequency,
@@ -388,7 +365,7 @@ export class InvestmentVaultService {
   // Disable auto-invest for vault
   async disableAutoInvest(investmentId: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'userVaultInvestments', investmentId), {
+      await db.collection('userVaultInvestments').doc(investmentId).update({
         autoInvestEnabled: false,
         autoInvestAmount: null,
         autoInvestFrequency: null,
@@ -404,14 +381,12 @@ export class InvestmentVaultService {
   async processAutoInvestments(): Promise<void> {
     try {
       const now = new Date();
-      const investmentsQuery = query(
-        collection(db, 'userVaultInvestments'),
-        where('autoInvestEnabled', '==', true),
-        where('nextAutoInvest', '<=', now),
-        where('status', '==', 'active')
-      );
+      const investmentsQuery = db.collection('userVaultInvestments')
+        .where('autoInvestEnabled', '==', true)
+        .where('nextAutoInvest', '<=', now)
+        .where('status', '==', 'active');
 
-      const snapshot = await getDocs(investmentsQuery);
+      const snapshot = await investmentsQuery.get();
       
       for (const doc of snapshot.docs) {
         const investment = doc.data() as UserVaultInvestment;
@@ -421,7 +396,7 @@ export class InvestmentVaultService {
           
           // Schedule next auto-invest
           const nextAutoInvest = this.calculateNextAutoInvest(investment.autoInvestFrequency);
-          await updateDoc(doc.ref, {
+          await doc.ref.update({
             nextAutoInvest: nextAutoInvest,
           });
         }
@@ -483,7 +458,7 @@ export class InvestmentVaultService {
     switch (frequency) {
       case 'daily':
         return new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      case 'weekly':
+      case 'weekly
         return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       case 'monthly':
         return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -596,10 +571,10 @@ export class InvestmentVaultService {
       ];
 
       for (const vault of sampleVaults) {
-        await addDoc(collection(db, 'investmentVaults'), {
+        await db.collection('investmentVaults').add({
           ...vault,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: firestore.FieldValue.serverTimestamp(),
         });
       }
     } catch (error) {

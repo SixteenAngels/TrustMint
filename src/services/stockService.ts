@@ -1,7 +1,8 @@
-import { collection, doc, getDocs, getDoc, setDoc, updateDoc, query, orderBy, where } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../firebase.config';
+import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import functions from '@react-native-firebase/functions';
 import { Stock, Transaction, PortfolioItem } from '../types';
+
+const db = firestore();
 
 export class StockService {
   private static instance: StockService;
@@ -18,7 +19,7 @@ export class StockService {
   // Fetch live GSE data via Cloud Function
   async fetchLiveData(): Promise<Stock[]> {
     try {
-      const fetchGSEData = httpsCallable(functions, 'fetchGSEData');
+      const fetchGSEData = functions().httpsCallable('fetchGSEData');
       const result = await fetchGSEData();
       const stocks = result.data as Stock[];
       
@@ -40,9 +41,9 @@ export class StockService {
   // Get stocks from Firestore
   async getStocks(): Promise<Stock[]> {
     try {
-      const stocksRef = collection(db, 'stocks');
-      const snapshot = await getDocs(stocksRef);
-      const stocks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Stock));
+      const stocksRef = db.collection('stocks');
+      const snapshot = await stocksRef.get();
+      const stocks = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ ...doc.data(), id: doc.id } as Stock));
       
       this.stocks = stocks;
       return stocks;
@@ -55,10 +56,10 @@ export class StockService {
   // Get single stock
   async getStock(stockId: string): Promise<Stock | null> {
     try {
-      const stockRef = doc(db, 'stocks', stockId);
-      const stockDoc = await getDoc(stockRef);
+      const stockRef = db.collection('stocks').doc(stockId);
+      const stockDoc = await stockRef.get();
       
-      if (stockDoc.exists()) {
+      if (stockDoc.exists) {
         return { ...stockDoc.data(), id: stockDoc.id } as Stock;
       }
       return null;
@@ -79,8 +80,8 @@ export class StockService {
 
   // Update stocks in Firestore
   private async updateStocksInFirestore(stocks: Stock[]): Promise<void> {
-    const batch = stocks.map(stock => 
-      setDoc(doc(db, 'stocks', stock.id), {
+    const batch: Promise<void>[] = stocks.map((stock: Stock) => 
+      db.collection('stocks').doc(stock.id).set({
         ...stock,
         updatedAt: new Date()
       })
@@ -91,13 +92,13 @@ export class StockService {
   // Get user's portfolio
   async getPortfolio(userId: string): Promise<PortfolioItem[]> {
     try {
-      const portfolioRef = collection(db, 'users', userId, 'portfolio');
-      const snapshot = await getDocs(portfolioRef);
-      const portfolio = snapshot.docs.map(doc => doc.data() as PortfolioItem);
+      const portfolioRef = db.collection('users').doc(userId).collection('portfolio');
+      const snapshot = await portfolioRef.get();
+      const portfolio = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data() as PortfolioItem);
       
       // Calculate current values
       const updatedPortfolio = await Promise.all(
-        portfolio.map(async (item) => {
+        portfolio.map(async (item: PortfolioItem) => {
           const stock = await this.getStock(item.stockId);
           if (stock) {
             const currentPrice = stock.price;
@@ -133,7 +134,7 @@ export class StockService {
     price: number
   ): Promise<Transaction> {
     try {
-      const tradeFunction = httpsCallable(functions, 'executeTrade');
+      const tradeFunction = functions().httpsCallable('executeTrade');
       const result = await tradeFunction({
         userId,
         stockId,
@@ -152,11 +153,11 @@ export class StockService {
   // Get transaction history
   async getTransactions(userId: string): Promise<Transaction[]> {
     try {
-      const transactionsRef = collection(db, 'users', userId, 'transactions');
-      const q = query(transactionsRef, orderBy('timestamp', 'desc'));
-      const snapshot = await getDocs(q);
+      const transactionsRef = db.collection('users').doc(userId).collection('transactions');
+      const q = transactionsRef.orderBy('timestamp', 'desc');
+      const snapshot = await q.get();
       
-      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Transaction));
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ ...doc.data(), id: doc.id } as Transaction));
     } catch (error) {
       console.error('Error getting transactions:', error);
       return [];

@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase.config';
+import { db } from '../firebase';
 import { Lesson } from '../types';
 
 export const LearningScreen: React.FC = () => {

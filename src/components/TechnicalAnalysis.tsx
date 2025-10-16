@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import {
+import V from 'victory-native';
+const {
   VictoryChart,
   VictoryLine,
   VictoryArea,
   VictoryAxis,
   VictoryTheme,
   VictoryLabel,
-} from 'victory-native';
+} = V;
 import { ChartService } from '../services/chartService';
 import { 
   ChartDataPoint, 
@@ -290,7 +291,7 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
               tickLabels: { fill: colors.textSecondary, fontSize: 12 },
               grid: { stroke: colors.border, strokeDasharray: '5,5' },
             }}
-            tickFormat={(t) => chartService.formatPrice(t)}
+            tickFormat={(t: any) => chartService.formatPrice(t)}
           />
           <VictoryAxis
             style={{

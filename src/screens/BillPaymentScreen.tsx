@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   payButtonText: {
-    ...typography.button,
+    ...typography.h5,
     color: colors.textWhite,
     fontSize: 18,
   },

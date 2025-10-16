@@ -8,21 +8,9 @@ import {
   BILL_CATEGORIES,
   BILL_PAYMENT_LIMITS
 } from '../types/payments';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp 
-} from 'firebase/firestore';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class BillPaymentService {
   private static instance: BillPaymentService;
@@ -54,10 +42,10 @@ export class BillPaymentService {
   // Add bill account
   async addBillAccount(accountData: Omit<BillAccount, 'id' | 'createdAt' | 'totalPaid'>): Promise<string> {
     try {
-      const accountRef = await addDoc(collection(db, 'billAccounts'), {
+      const accountRef = await db.collection('billAccounts').add({
         ...accountData,
         totalPaid: 0,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return accountRef.id;
@@ -70,17 +58,15 @@ export class BillPaymentService {
   // Get user's bill accounts
   async getBillAccounts(userId: string): Promise<BillAccount[]> {
     try {
-      const accountsQuery = query(
-        collection(db, 'billAccounts'),
-        where('userId', '==', userId),
-        where('isActive', '==', true),
-        orderBy('isDefault', 'desc'),
-        orderBy('lastPaid', 'desc')
-      );
+      const accountsQuery = db.collection('billAccounts')
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .orderBy('isDefault', 'desc')
+        .orderBy('lastPaid', 'desc');
 
-      const snapshot = await getDocs(accountsQuery);
+      const snapshot = await accountsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -98,9 +84,9 @@ export class BillPaymentService {
   // Update bill account
   async updateBillAccount(accountId: string, updates: Partial<BillAccount>): Promise<void> {
     try {
-      await updateDoc(doc(db, 'billAccounts', accountId), {
+      await db.collection('billAccounts').doc(accountId).update({
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating bill account:', error);
@@ -111,9 +97,9 @@ export class BillPaymentService {
   // Delete bill account
   async deleteBillAccount(accountId: string): Promise<void> {
     try {
-      await updateDoc(doc(db, 'billAccounts', accountId), {
+      await db.collection('billAccounts').doc(accountId).update({
         isActive: false,
-        deletedAt: serverTimestamp(),
+        deletedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error deleting bill account:', error);
@@ -139,12 +125,12 @@ export class BillPaymentService {
       const reference = this.generatePaymentReference();
 
       // Create payment record
-      const paymentRef = await addDoc(collection(db, 'billPayments'), {
+      const paymentRef = await db.collection('billPayments').add({
         ...paymentData,
         totalAmount,
         reference,
         status: 'processing',
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Process payment
@@ -171,9 +157,9 @@ export class BillPaymentService {
       await this.updateUserBalance(paymentData.userId, -paymentData.totalAmount);
 
       // Update payment status
-      await updateDoc(doc(db, 'billPayments', paymentId), {
+      await db.collection('billPayments').doc(paymentId).update({
         status: 'completed',
-        completedAt: serverTimestamp(),
+        completedAt: firestore.FieldValue.serverTimestamp(),
         providerReference: this.generateProviderReference(),
         receipt: this.generateReceipt(paymentId),
       });
@@ -185,7 +171,7 @@ export class BillPaymentService {
       await this.createBillHistoryRecord(paymentData, paymentId);
     } catch (error) {
       // Mark payment as failed
-      await updateDoc(doc(db, 'billPayments', paymentId), {
+      await db.collection('billPayments').doc(paymentId).update({
         status: 'failed',
       });
       throw error;
@@ -195,16 +181,14 @@ export class BillPaymentService {
   // Get bill payment history
   async getBillPaymentHistory(userId: string, limitCount: number = 20): Promise<BillPayment[]> {
     try {
-      const paymentsQuery = query(
-        collection(db, 'billPayments'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
+      const paymentsQuery = db.collection('billPayments')
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(limitCount);
 
-      const snapshot = await getDocs(paymentsQuery);
+      const snapshot = await paymentsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -222,9 +206,9 @@ export class BillPaymentService {
   // Get bill payment by ID
   async getBillPayment(paymentId: string): Promise<BillPayment | null> {
     try {
-      const paymentDoc = await getDoc(doc(db, 'billPayments', paymentId));
+      const paymentDoc = await db.collection('billPayments').doc(paymentId).get();
       
-      if (!paymentDoc.exists()) {
+      if (!paymentDoc.exists) {
         return null;
       }
 
@@ -244,16 +228,14 @@ export class BillPaymentService {
   // Get bill history for account
   async getBillHistory(accountId: string, limitCount: number = 20): Promise<BillHistory[]> {
     try {
-      const historyQuery = query(
-        collection(db, 'billHistory'),
-        where('accountId', '==', accountId),
-        orderBy('paidAt', 'desc'),
-        limit(limitCount)
-      );
+      const historyQuery = db.collection('billHistory')
+        .where('accountId', '==', accountId)
+        .orderBy('paidAt', 'desc')
+        .limit(limitCount);
 
-      const snapshot = await getDocs(historyQuery);
+      const snapshot = await historyQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -332,15 +314,13 @@ export class BillPaymentService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dailyPaymentsQuery = query(
-      collection(db, 'billPayments'),
-      where('userId', '==', userId),
-      where('createdAt', '>=', today),
-      where('status', '==', 'completed')
-    );
+    const dailyPaymentsQuery = db.collection('billPayments')
+      .where('userId', '==', userId)
+      .where('createdAt', '>=', today)
+      .where('status', '==', 'completed');
 
-    const dailySnapshot = await getDocs(dailyPaymentsQuery);
-    const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+    const dailySnapshot = await dailyPaymentsQuery.get();
+    const dailyTotal = dailySnapshot.docs.reduce((sum: number, doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => sum + doc.data().amount, 0);
 
     if (dailyTotal + amount > BILL_PAYMENT_LIMITS.daily) {
       throw new Error(`Daily bill payment limit exceeded. Maximum: ₵${BILL_PAYMENT_LIMITS.daily}`);
@@ -379,11 +359,11 @@ export class BillPaymentService {
 
   private async updateBillAccountAfterPayment(accountId: string, amount: number): Promise<void> {
     try {
-      const accountDoc = await getDoc(doc(db, 'billAccounts', accountId));
-      if (accountDoc.exists()) {
+      const accountDoc = await db.collection('billAccounts').doc(accountId).get();
+      if (accountDoc.exists) {
         const currentData = accountDoc.data();
-        await updateDoc(doc(db, 'billAccounts', accountId), {
-          lastPaid: serverTimestamp(),
+        await db.collection('billAccounts').doc(accountId).update({
+          lastPaid: firestore.FieldValue.serverTimestamp(),
           totalPaid: (currentData.totalPaid || 0) + amount,
         });
       }
@@ -397,16 +377,16 @@ export class BillPaymentService {
     paymentId: string
   ): Promise<void> {
     try {
-      const accountDoc = await getDoc(doc(db, 'billAccounts', paymentData.accountId));
-      if (accountDoc.exists()) {
+      const accountDoc = await db.collection('billAccounts').doc(paymentData.accountId).get();
+      if (accountDoc.exists) {
         const accountData = accountDoc.data();
         
-        await addDoc(collection(db, 'billHistory'), {
+        await db.collection('billHistory').add({
           userId: paymentData.userId,
           providerId: paymentData.providerId,
           accountNumber: accountData.accountNumber,
           amount: paymentData.amount,
-          paidAt: serverTimestamp(),
+          paidAt: firestore.FieldValue.serverTimestamp(),
           reference: paymentId,
           status: 'success',
         });

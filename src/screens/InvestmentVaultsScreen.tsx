@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   investmentAmount: {
-    ...typography.h6,
+    ...typography.h5,
     color: colors.textPrimary,
     fontWeight: '700',
   },
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryStatValue: {
-    ...typography.h6,
+    ...typography.body,
     color: colors.textPrimary,
     fontWeight: '700',
   },
@@ -952,7 +952,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   investButtonText: {
-    ...typography.button,
+    ...typography.body,
     color: colors.textWhite,
     fontSize: 18,
   },

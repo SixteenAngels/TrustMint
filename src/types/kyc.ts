@@ -96,7 +96,7 @@ export interface AddressInfo {
   mailingAddress?: Address;
   addressVerificationStatus: 'pending' | 'verified' | 'rejected';
   addressVerificationDate?: Date;
-  addressVerificationMethod?: 'utility_bill' | 'bank_statement' | 'government_letter' | 'other';
+  addressVerificationMethod: 'utility_bill' | 'bank_statement' | 'government_letter' | 'other';
 }
 
 export interface Address {
@@ -131,7 +131,7 @@ export interface EmploymentInfo {
   supervisorPhone?: string;
   verificationStatus: 'pending' | 'verified' | 'rejected';
   verificationDate?: Date;
-  verificationMethod?: 'employment_letter' | 'pay_slip' | 'bank_statement' | 'other';
+  verificationMethod: 'employment_letter' | 'pay_slip' | 'bank_statement' | 'other';
 }
 
 export interface FinancialInfo {
@@ -263,6 +263,7 @@ export interface SmileIDResult {
   code: string;
   message: string;
   success: boolean;
+  quality: number, // Added quality property
   confidence: number;
   data: {
     idNumber?: string;

@@ -1,5 +1,4 @@
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../firebase.config';
+import functions from '@react-native-firebase/functions';
 
 // Zeepay Payment Types
 export interface ZeepayPaymentRequest {
@@ -105,7 +104,7 @@ export class PaymentService {
   // Initiate payment
   async initiatePayment(paymentRequest: ZeepayPaymentRequest): Promise<ZeepayPaymentResponse> {
     try {
-      const initiatePaymentFunction = httpsCallable(functions, 'zeepayInitiatePayment');
+      const initiatePaymentFunction = functions().httpsCallable('zeepayInitiatePayment');
       const result = await initiatePaymentFunction(paymentRequest);
       
       return result.data as ZeepayPaymentResponse;
@@ -118,7 +117,7 @@ export class PaymentService {
   // Verify payment status
   async verifyPayment(transactionId: string): Promise<ZeepayPaymentResponse> {
     try {
-      const verifyPaymentFunction = httpsCallable(functions, 'zeepayVerifyPayment');
+      const verifyPaymentFunction = functions().httpsCallable('zeepayVerifyPayment');
       const result = await verifyPaymentFunction({ transactionId });
       
       return result.data as ZeepayPaymentResponse;

@@ -26,17 +26,19 @@ export const PortfolioScreen: React.FC = () => {
   const stockService = StockService.getInstance();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [portfolioData, stocksData] = await Promise.all([
         user ? stockService.getPortfolio(user.uid) : [],
-        stockService.getStocks()
+        stockService.getStocks(),
       ]);
-      
+
       setPortfolio(portfolioData);
       setStocks(stocksData);
     } catch (error) {

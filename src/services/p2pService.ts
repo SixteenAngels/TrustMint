@@ -5,21 +5,9 @@ import {
   P2PContact,
   P2P_TRANSFER_LIMITS 
 } from '../types/payments';
-import { db } from '../../firebase.config';
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  serverTimestamp 
-} from 'firebase/firestore';
+import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
+const db = firestore();
 
 export class P2PService {
   private static instance: P2PService;
@@ -51,10 +39,10 @@ export class P2PService {
       };
 
       // Store QR code data
-      const qrRef = await addDoc(collection(db, 'qrCodes'), {
+      const qrRef = await db.collection('qrCodes').add({
         ...qrData,
         userId,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // QRCodeData type does not include id; return same shape
@@ -132,9 +120,9 @@ export class P2PService {
         expiresAt: qrData.expiresAt,
       };
 
-      const transferRef = await addDoc(collection(db, 'p2pTransfers'), {
+      const transferRef = await db.collection('p2pTransfers').add({
         ...transfer,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return {
@@ -170,9 +158,9 @@ export class P2PService {
         createdAt: new Date(),
       };
 
-      const transferRef = await addDoc(collection(db, 'p2pTransfers'), {
+      const transferRef = await db.collection('p2pTransfers').add({
         ...transfer,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return {
@@ -199,11 +187,11 @@ export class P2PService {
       await this.checkSenderBalance(transferData.senderId, totalAmount);
 
       // Create transfer record
-      const transferRef = await addDoc(collection(db, 'p2pTransfers'), {
+      const transferRef = await db.collection('p2pTransfers').add({
         ...transferData,
         transactionFee,
         status: 'processing',
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Process transfer
@@ -226,16 +214,16 @@ export class P2PService {
       await this.updateWalletBalance(transferData.recipientId, transferData.amount);
 
       // Update transfer status
-      await updateDoc(doc(db, 'p2pTransfers', transferId), {
+      await db.collection('p2pTransfers').doc(transferId).update({
         status: 'completed',
-        completedAt: serverTimestamp(),
+        completedAt: firestore.FieldValue.serverTimestamp(),
       });
 
       // Create transaction records
       await this.createTransactionRecords(transferId, transferData);
     } catch (error) {
       // Mark transfer as failed
-      await updateDoc(doc(db, 'p2pTransfers', transferId), {
+      await db.collection('p2pTransfers').doc(transferId).update({
         status: 'failed',
       });
       throw error;
@@ -245,16 +233,14 @@ export class P2PService {
   // Get P2P transfers for user
   async getP2PTransfers(userId: string, limitCount: number = 20): Promise<P2PTransfer[]> {
     try {
-      const transfersQuery = query(
-        collection(db, 'p2pTransfers'),
-        where('senderId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
+      const transfersQuery = db.collection('p2pTransfers')
+        .where('senderId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(limitCount);
 
-      const snapshot = await getDocs(transfersQuery);
+      const snapshot = await transfersQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -273,16 +259,14 @@ export class P2PService {
   // Get received transfers for user
   async getReceivedTransfers(userId: string, limitCount: number = 20): Promise<P2PTransfer[]> {
     try {
-      const transfersQuery = query(
-        collection(db, 'p2pTransfers'),
-        where('recipientId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
+      const transfersQuery = db.collection('p2pTransfers')
+        .where('recipientId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(limitCount);
 
-      const snapshot = await getDocs(transfersQuery);
+      const snapshot = await transfersQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -301,11 +285,11 @@ export class P2PService {
   // Add contact
   async addContact(contactData: Omit<P2PContact, 'id' | 'createdAt' | 'totalTransactions' | 'totalAmount'>): Promise<string> {
     try {
-      const contactRef = await addDoc(collection(db, 'p2pContacts'), {
+      const contactRef = await db.collection('p2pContacts').add({
         ...contactData,
         totalTransactions: 0,
         totalAmount: 0,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return contactRef.id;
@@ -318,16 +302,14 @@ export class P2PService {
   // Get contacts
   async getContacts(userId: string): Promise<P2PContact[]> {
     try {
-      const contactsQuery = query(
-        collection(db, 'p2pContacts'),
-        where('userId', '==', userId),
-        orderBy('isFavorite', 'desc'),
-        orderBy('lastTransaction', 'desc')
-      );
+      const contactsQuery = db.collection('p2pContacts')
+        .where('userId', '==', userId)
+        .orderBy('isFavorite', 'desc')
+        .orderBy('lastTransaction', 'desc');
 
-      const snapshot = await getDocs(contactsQuery);
+      const snapshot = await contactsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -384,9 +366,9 @@ export class P2PService {
         usageCount: 0,
       };
 
-      const addressRef = await addDoc(collection(db, 'walletAddresses'), {
+      const addressRef = await db.collection('walletAddresses').add({
         ...walletAddress,
-        createdAt: serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
       });
 
       return {
@@ -402,14 +384,12 @@ export class P2PService {
   // Get user wallet address
   async getUserWalletAddress(userId: string): Promise<string> {
     try {
-      const addressQuery = query(
-        collection(db, 'walletAddresses'),
-        where('userId', '==', userId),
-        where('isActive', '==', true),
-        limit(1)
-      );
+      const addressQuery = db.collection('walletAddresses')
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .limit(1);
 
-      const snapshot = await getDocs(addressQuery);
+      const snapshot = await addressQuery.get();
       
       if (snapshot.empty) {
         // Generate new address if none exists
@@ -436,15 +416,13 @@ export class P2PService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const dailyTransfersQuery = query(
-      collection(db, 'p2pTransfers'),
-      where('senderId', '==', userId),
-      where('createdAt', '>=', today),
-      where('status', '==', 'completed')
-    );
+    const dailyTransfersQuery = db.collection('p2pTransfers')
+      .where('senderId', '==', userId)
+      .where('createdAt', '>=', today)
+      .where('status', '==', 'completed');
 
-    const dailySnapshot = await getDocs(dailyTransfersQuery);
-    const dailyTotal = dailySnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+    const dailySnapshot = await dailyTransfersQuery.get();
+    const dailyTotal = dailySnapshot.docs.reduce((sum: number, doc: { data: () => { amount: any; }; }) => sum + doc.data().amount, 0);
 
     if (dailyTotal + amount > P2P_TRANSFER_LIMITS.daily) {
       throw new Error(`Daily transfer limit exceeded. Maximum: ₵${P2P_TRANSFER_LIMITS.daily}`);
