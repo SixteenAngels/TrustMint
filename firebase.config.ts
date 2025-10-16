@@ -6,7 +6,7 @@ import { getFunctions } from 'firebase/functions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "your-api-key",
   authDomain: "mint-trade-gh.firebaseapp.com",
   projectId: "mint-trade-gh",

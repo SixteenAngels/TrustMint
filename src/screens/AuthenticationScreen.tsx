@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,19 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { firebaseConfig } from '../../firebase.config';
 
 interface AuthenticationScreenProps {
   onComplete: () => void;
 }
 
 export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onComplete }) => {
+  const recaptchaVerifier = useRef<any>(null);
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [name, setName] = useState('');
@@ -175,7 +178,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
         onPress={async () => {
-          try { setLoading(true); const id = await startPhoneVerification(phoneNumber); setVerificationId(id); }
+          try { setLoading(true); const id = await startPhoneVerification(phoneNumber, recaptchaVerifier.current); setVerificationId(id); }
           catch { Alert.alert('Error', 'Failed to send code'); }
           finally { setLoading(false); }
         }}
@@ -285,6 +288,11 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebaseConfig as any}
+        attemptInvisibleVerification
+      />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}

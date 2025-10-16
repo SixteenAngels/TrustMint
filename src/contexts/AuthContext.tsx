@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithPhoneNumber, 
-  PhoneAuthProvider, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  PhoneAuthProvider,
   signInWithCredential,
-  signOut,
+  linkWithCredential,
+  signOut as firebaseSignOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  ApplicationVerifier,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
@@ -14,7 +18,9 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithPhone: (phoneNumber: string) => Promise<string>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  startPhoneVerification: (phoneNumber: string, appVerifier: ApplicationVerifier) => Promise<string>;
   verifyOTP: (verificationId: string, otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
@@ -50,36 +56,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const signInWithPhone = async (phoneNumber: string): Promise<string> => {
-    try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber);
-      return confirmation.verificationId;
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-      throw error;
-    }
+  const signUpWithEmail = async (email: string, password: string, name?: string): Promise<void> => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (name) await updateProfile(cred.user, { displayName: name });
+  };
+
+  const signInWithEmail = async (email: string, password: string): Promise<void> => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const startPhoneVerification = async (phoneNumber: string, appVerifier: ApplicationVerifier): Promise<string> => {
+    const provider = new PhoneAuthProvider(auth);
+    const verificationId = await provider.verifyPhoneNumber(phoneNumber, appVerifier);
+    return verificationId;
   };
 
   const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
     try {
       const credential = PhoneAuthProvider.credential(verificationId, otp);
-      const result = await signInWithCredential(auth, credential);
-      
-      // Create user document if it doesn't exist
-      const userRef = doc(db, 'users', result.user.uid);
-      const userDoc = await getDoc(userRef);
-      
-      if (!userDoc.exists()) {
-        const newUser: User = {
-          uid: result.user.uid,
-          name: '',
-          phone: result.user.phoneNumber || '',
-          verified: true,
-          balance: 10000, // Starting demo balance
-          createdAt: new Date(),
-        };
-        await setDoc(userRef, newUser);
-        setUser(newUser);
+
+      if (auth.currentUser) {
+        const linkedResult = await linkWithCredential(auth.currentUser, credential);
+        const userRef = doc(db, 'users', linkedResult.user.uid);
+        await setDoc(userRef, { phone: linkedResult.user.phoneNumber || '', verified: true }, { merge: true });
+        setUser((prev) => (prev ? { ...prev, phone: linkedResult.user.phoneNumber || '', verified: true } : prev));
+      } else {
+        const result = await signInWithCredential(auth, credential);
+        const userRef = doc(db, 'users', result.user.uid);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+          const newUser: User = {
+            uid: result.user.uid,
+            name: '',
+            phone: result.user.phoneNumber || '',
+            verified: true,
+            balance: 10000,
+            createdAt: new Date(),
+          };
+          await setDoc(userRef, newUser);
+          setUser(newUser);
+        }
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
@@ -89,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (): Promise<void> => {
     try {
-      await signOut(auth);
+      await firebaseSignOut(auth);
       setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -99,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUser = async (userData: Partial<User>): Promise<void> => {
     if (!user) return;
-    
+
     try {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, { ...user, ...userData }, { merge: true });
@@ -113,15 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     user,
     loading,
-    signInWithPhone,
+    signUpWithEmail,
+    signInWithEmail,
+    startPhoneVerification,
     verifyOTP,
     signOut,
     updateUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
