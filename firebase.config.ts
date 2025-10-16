@@ -5,7 +5,7 @@ import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
 // Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyAD5LtDxB5tI8EwiyfRB-RdCJOUqGnxD8A",
   authDomain: "trustmint-73687187-f32e6.firebaseapp.com",
   projectId: "trustmint-73687187-f32e6",

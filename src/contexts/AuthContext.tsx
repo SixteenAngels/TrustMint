@@ -5,9 +5,11 @@ import {
   updateProfile,
   PhoneAuthProvider, 
   signInWithCredential,
+  linkWithCredential,
   signOut,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  ApplicationVerifier,
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
@@ -24,7 +26,7 @@ interface AuthContextType {
   loading: boolean;
   signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  startPhoneVerification: (phoneNumber: string) => Promise<string>;
+  startPhoneVerification: (phoneNumber: string, appVerifier: ApplicationVerifier) => Promise<string>;
   verifyOTP: (verificationId: string, otp: string) => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -71,10 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const startPhoneVerification = async (phoneNumber: string): Promise<string> => {
-    // Placeholder: integrate reCAPTCHA verifier if using web phone auth
+  const startPhoneVerification = async (phoneNumber: string, appVerifier: ApplicationVerifier): Promise<string> => {
     const provider = new PhoneAuthProvider(auth);
-    const verificationId = await provider.verifyPhoneNumber(phoneNumber, undefined as any);
+    const verificationId = await provider.verifyPhoneNumber(phoneNumber, appVerifier);
     return verificationId;
   };
 
@@ -125,23 +126,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
     try {
       const credential = PhoneAuthProvider.credential(verificationId, otp);
-      const result = await signInWithCredential(auth, credential);
-      
-      // Create user document if it doesn't exist
-      const userRef = doc(db, 'users', result.user.uid);
-      const userDoc = await getDoc(userRef);
-      
-      if (!userDoc.exists()) {
-        const newUser: User = {
-          uid: result.user.uid,
-          name: '',
-          phone: result.user.phoneNumber || '',
-          verified: true,
-          balance: 10000, // Starting demo balance
-          createdAt: new Date(),
-        };
-        await setDoc(userRef, newUser);
-        setUser(newUser);
+
+      // If user already signed in (email/SSO), link phone to that account; otherwise sign in with phone
+      if (auth.currentUser) {
+        const linkedResult = await linkWithCredential(auth.currentUser, credential);
+        const userRef = doc(db, 'users', linkedResult.user.uid);
+        await setDoc(userRef, { phone: linkedResult.user.phoneNumber || '', verified: true }, { merge: true });
+        setUser((prev) => prev ? { ...prev, phone: linkedResult.user.phoneNumber || '', verified: true } : prev);
+      } else {
+        const result = await signInWithCredential(auth, credential);
+        const userRef = doc(db, 'users', result.user.uid);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+          const newUser: User = {
+            uid: result.user.uid,
+            name: '',
+            phone: result.user.phoneNumber || '',
+            verified: true,
+            balance: 10000,
+            createdAt: new Date(),
+          };
+          await setDoc(userRef, newUser);
+          setUser(newUser);
+        }
       }
     } catch (error) {
       console.error('Error verifying OTP:', error);
