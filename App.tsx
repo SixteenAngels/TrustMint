@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { WalletProvider } from './src/contexts/WalletContext';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { WelcomeSlidesScreen } from './src/screens/WelcomeSlidesScreen';
-import { AuthenticationScreen } from './src/screens/OnboardingScreen';
+import { AuthenticationScreen } from './src/screens/AuthenticationScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { MarketsScreen } from './src/screens/MarketsScreen';
 import { TradingScreen } from './src/screens/TradingScreen';
