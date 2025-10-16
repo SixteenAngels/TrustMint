@@ -280,7 +280,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
       </View>
       
       <View style={styles.vaultPerformance}>
-        <Text style={styles.performanceLabel}>Performance</Text>
+        <Text style={styles.performanceGridLabel}>Performance</Text>
         <View style={styles.performanceRow}>
           <Text style={styles.performanceItem}>1M: {vault.performance.monthly > 0 ? '+' : ''}{vault.performance.monthly.toFixed(1)}%</Text>
           <Text style={styles.performanceItem}>1Y: {vault.performance.yearly > 0 ? '+' : ''}{vault.performance.yearly.toFixed(1)}%</Text>
@@ -289,7 +289,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
       
       <View style={styles.vaultFooter}>
         <Text style={styles.vaultInvestors}>{vault.totalInvestors} investors</Text>
-        <Text style={styles.investButton}>Invest Now →</Text>
+          <Text style={styles.investButtonTextLink}>Invest Now →</Text>
       </View>
     </TouchableOpacity>
   );
@@ -383,13 +383,13 @@ export const InvestmentVaultsScreen: React.FC = () => {
             <Text style={styles.performanceValue}>
               {myInvestments.length}
             </Text>
-            <Text style={styles.performanceLabel}>Active Vaults</Text>
+            <Text style={styles.performanceGridLabel}>Active Vaults</Text>
           </View>
           <View style={styles.performanceItem}>
             <Text style={styles.performanceValue}>
               ₵{myInvestments.reduce((sum, inv) => sum + inv.amount, 0).toFixed(2)}
             </Text>
-            <Text style={styles.performanceLabel}>Total Invested</Text>
+            <Text style={styles.performanceGridLabel}>Total Invested</Text>
           </View>
         </View>
       </View>
@@ -711,19 +711,13 @@ const styles = StyleSheet.create({
   vaultPerformance: {
     marginBottom: spacing.md,
   },
-  performanceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
+  // Note: renamed to performanceGridLabel below to avoid duplicate key
   performanceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   performanceItem: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontWeight: '600',
+    alignItems: 'center',
   },
   vaultFooter: {
     flexDirection: 'row',
@@ -734,7 +728,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  investButton: {
+  investButtonTextLink: {
     ...typography.caption,
     color: colors.primary,
     fontWeight: '600',
@@ -819,7 +813,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '700',
   },
-  performanceLabel: {
+  performanceGridLabel: {
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: spacing.xs,

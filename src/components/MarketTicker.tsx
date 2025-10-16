@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, AccessibilityInfo } from 'react-native';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
+import { shadows } from '../styles/shadows';
 import { Stock } from '../types';
 
 interface MarketTickerProps {
@@ -13,16 +14,23 @@ export const MarketTicker: React.FC<MarketTickerProps> = ({ stocks }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const scrollAnimation = Animated.loop(
-      Animated.timing(scrollX, {
-        toValue: 1,
-        duration: 20000, // 20 seconds for full scroll
-        useNativeDriver: true,
-      })
-    );
-    scrollAnimation.start();
-
-    return () => scrollAnimation.stop();
+    let animation: Animated.CompositeAnimation | null = null;
+    const start = async () => {
+      const reduce = await AccessibilityInfo.isReduceMotionEnabled();
+      if (reduce) return;
+      animation = Animated.loop(
+        Animated.timing(scrollX, {
+          toValue: 1,
+          duration: 20000,
+          useNativeDriver: true,
+        })
+      );
+      animation.start();
+    };
+    start();
+    return () => {
+      animation?.stop();
+    };
   }, []);
 
   const formatPrice = (price: number) => {

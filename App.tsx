@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { WalletProvider } from './src/contexts/WalletContext';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { WelcomeSlidesScreen } from './src/screens/WelcomeSlidesScreen';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { AuthenticationScreen } from './src/screens/AuthenticationScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { MarketsScreen } from './src/screens/MarketsScreen';
 import { TradingScreen } from './src/screens/TradingScreen';
@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showTrading, setShowTrading] = useState(false);
-  const [selectedStock, setSelectedStock] = useState(null);
+  const [selectedStock, setSelectedStock] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -98,7 +98,7 @@ const AppContent: React.FC = () => {
   if (!user) {
     return (
       <View style={styles.container}>
-        <OnboardingScreen onComplete={() => setShowWelcome(true)} />
+        <AuthenticationScreen onComplete={() => setShowWelcome(true)} />
         <StatusBar style="auto" />
       </View>
     );

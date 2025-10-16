@@ -67,7 +67,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
   });
   const [chartMetrics, setChartMetrics] = useState<ChartMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDataPoint, setSelectedDataPoint] = useState<ChartDataPoint | null>(null);
+  const [selectedDataPoint, setSelectedDataPoint] = useState<ChartDataPoint | undefined>(undefined);
 
   const chartService = ChartService.getInstance();
 
@@ -319,7 +319,7 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
           {/* Tooltip */}
           <VictoryTooltip
             active={!!selectedDataPoint}
-            datum={selectedDataPoint}
+            datum={selectedDataPoint as unknown as Record<string, any>}
             labelComponent={
               <VictoryLabel
                 text={selectedDataPoint ? 

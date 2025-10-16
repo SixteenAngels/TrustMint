@@ -1,4 +1,8 @@
 // Mint Trade Design System Colors
+import { Appearance } from 'react-native';
+
+const isDark = Appearance.getColorScheme() === 'dark';
+
 export const colors = {
   // Primary Colors
   primary: '#00B67A',        // Mint Green - growth, wealth, freshness
@@ -14,15 +18,15 @@ export const colors = {
   accentDark: '#E6C200',     // Darker gold for text
   
   // Background Colors
-  background: '#F9FAFB',     // Off-white - clean background
-  backgroundSecondary: '#FFFFFF', // Pure white for cards
+  background: isDark ? '#0F172A' : '#F9FAFB',
+  backgroundSecondary: isDark ? '#111827' : '#FFFFFF',
   backgroundDark: '#0F172A', // Dark mode background
   
   // Text Colors
-  textPrimary: '#0F172A',    // Deep navy for headings
-  textSecondary: '#64748B',  // Slate for body text
-  textLight: '#94A3B8',      // Light slate for captions
-  textWhite: '#FFFFFF',      // White text
+  textPrimary: isDark ? '#F9FAFB' : '#0F172A',
+  textSecondary: isDark ? '#CBD5E1' : '#64748B',
+  textLight: isDark ? '#94A3B8' : '#94A3B8',
+  textWhite: '#FFFFFF',
   
   // Status Colors
   success: '#10B981',        // Green 500 - success states
@@ -33,13 +37,13 @@ export const colors = {
   warningLight: '#FEF3C7',   // Light amber background
   
   // Border Colors
-  border: '#E2E8F0',         // Light border
-  borderDark: '#CBD5E1',     // Darker border
+  border: isDark ? '#334155' : '#E2E8F0',
+  borderDark: isDark ? '#475569' : '#CBD5E1',
   borderFocus: '#00B67A',    // Focus border (mint)
   
   // Shadow Colors
-  shadow: 'rgba(15, 23, 42, 0.1)',
-  shadowDark: 'rgba(15, 23, 42, 0.2)',
+  shadow: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(15, 23, 42, 0.1)',
+  shadowDark: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(15, 23, 42, 0.2)',
   
   // Chart Colors
   chartGreen: '#00B67A',     // Positive changes

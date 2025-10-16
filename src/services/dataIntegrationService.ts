@@ -98,6 +98,7 @@ export class DataIntegrationService {
       // Mock implementation - replace with actual API call
       const mockData: Stock[] = [
         {
+          id: 'MTN',
           symbol: 'MTN',
           name: 'MTN Ghana',
           price: 1.20,
@@ -112,9 +113,11 @@ export class DataIntegrationService {
           marketCap: 2500000000,
           pe: 15.2,
           dividend: 0.08,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'CAL',
           symbol: 'CAL',
           name: 'CAL Bank',
           price: 0.85,
@@ -129,9 +132,11 @@ export class DataIntegrationService {
           marketCap: 850000000,
           pe: 12.8,
           dividend: 0.05,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'GCB',
           symbol: 'GCB',
           name: 'GCB Bank',
           price: 4.10,
@@ -146,9 +151,11 @@ export class DataIntegrationService {
           marketCap: 4100000000,
           pe: 18.5,
           dividend: 0.25,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'SCB',
           symbol: 'SCB',
           name: 'Standard Chartered Bank',
           price: 2.50,
@@ -163,9 +170,11 @@ export class DataIntegrationService {
           marketCap: 1250000000,
           pe: 14.2,
           dividend: 0.15,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'EGL',
           symbol: 'EGL',
           name: 'Enterprise Group',
           price: 0.95,
@@ -180,9 +189,11 @@ export class DataIntegrationService {
           marketCap: 475000000,
           pe: 11.8,
           dividend: 0.06,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'FML',
           symbol: 'FML',
           name: 'Fan Milk',
           price: 0.45,
@@ -197,9 +208,11 @@ export class DataIntegrationService {
           marketCap: 225000000,
           pe: 9.5,
           dividend: 0.03,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'TOTAL',
           symbol: 'TOTAL',
           name: 'Total Petroleum',
           price: 3.20,
@@ -214,9 +227,11 @@ export class DataIntegrationService {
           marketCap: 1600000000,
           pe: 16.8,
           dividend: 0.20,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         {
+          id: 'GOIL',
           symbol: 'GOIL',
           name: 'Ghana Oil Company',
           price: 1.80,
@@ -231,6 +246,7 @@ export class DataIntegrationService {
           marketCap: 900000000,
           pe: 13.2,
           dividend: 0.12,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
       ];
@@ -254,6 +270,7 @@ export class DataIntegrationService {
       // For now, return enhanced mock data
       const officialData: Stock[] = [
         {
+          id: 'MTN',
           symbol: 'MTN',
           name: 'MTN Ghana Limited',
           price: 1.20,
@@ -268,6 +285,7 @@ export class DataIntegrationService {
           marketCap: 2500000000,
           pe: 15.2,
           dividend: 0.08,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         // Add more official data...
@@ -289,6 +307,7 @@ export class DataIntegrationService {
       // Mock implementation for EODHD
       const eodhdData: Stock[] = [
         {
+          id: 'MTN',
           symbol: 'MTN',
           name: 'MTN Ghana',
           price: 1.19,
@@ -303,6 +322,7 @@ export class DataIntegrationService {
           marketCap: 2475000000,
           pe: 15.0,
           dividend: 0.08,
+          updatedAt: new Date(),
           lastUpdated: new Date(),
         },
         // Add more EODHD data...
@@ -345,7 +365,8 @@ export class DataIntegrationService {
         }
       } catch (error) {
         console.error(`Error fetching data from ${sourceName}:`, error);
-        errors.push(`${sourceName}: ${error.message}`);
+        const message = (error as any)?.message || String(error);
+        errors.push(`${sourceName}: ${message}`);
         this.updateDataSourceStatus(sourceName, false);
       }
     }
@@ -447,7 +468,8 @@ export class DataIntegrationService {
     
     let timelyCount = 0;
     data.forEach(stock => {
-      const age = now.getTime() - stock.lastUpdated.getTime();
+      const last = stock.lastUpdated ?? stock.updatedAt ?? new Date();
+      const age = now.getTime() - last.getTime();
       if (age <= maxAge) {
         timelyCount++;
       }

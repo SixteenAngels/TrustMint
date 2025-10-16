@@ -149,6 +149,7 @@ export const BillPaymentScreen: React.FC = () => {
           paymentMethod,
           amountValue
         ),
+        totalAmount: amountValue + billService.calculatePaymentFees(selectedProvider.id, paymentMethod, amountValue),
       };
 
       const paymentId = await billService.payBill(paymentData);

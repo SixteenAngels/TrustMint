@@ -60,6 +60,7 @@ export const AIInsightsScreen: React.FC = () => {
     try {
       // Mock stock data for insights
       const mockStock = {
+        id: 'MTN',
         symbol: 'MTN',
         name: 'MTN Ghana',
         price: 1.20,
@@ -74,6 +75,7 @@ export const AIInsightsScreen: React.FC = () => {
         marketCap: 2500000000,
         pe: 15.2,
         dividend: 0.08,
+        updatedAt: new Date(),
         lastUpdated: new Date(),
       };
 
