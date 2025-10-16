@@ -85,8 +85,9 @@ export const AdvancedChart: React.FC<AdvancedChartProps> = ({
   const loadChartData = async () => {
     setLoading(true);
     try {
-      // Generate sample OHLC data
-      const ohlc = chartService.generateSampleOHLCData(chartConfig.timeRange, symbol);
+      // TODO: Fetch real OHLC data from API
+      // This should get actual historical price data for the symbol
+      const ohlc = await chartService.fetchHistoricalData(symbol, chartConfig.timeRange);
       setOhlcData(ohlc);
       
       // Convert to Victory format

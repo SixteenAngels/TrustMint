@@ -95,166 +95,9 @@ export class DataIntegrationService {
     try {
       console.log('Fetching data from GSE-API...');
       
-      // Mock implementation - replace with actual API call
-      const mockData: Stock[] = [
-        {
-          id: 'MTN',
-          symbol: 'MTN',
-          name: 'MTN Ghana',
-          price: 1.20,
-          change: 0.05,
-          changePercent: 4.35,
-          volume: 1250000,
-          high: 1.25,
-          low: 1.15,
-          open: 1.18,
-          previousClose: 1.15,
-          sector: 'Telecommunications',
-          marketCap: 2500000000,
-          pe: 15.2,
-          dividend: 0.08,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'CAL',
-          symbol: 'CAL',
-          name: 'CAL Bank',
-          price: 0.85,
-          change: -0.02,
-          changePercent: -2.30,
-          volume: 890000,
-          high: 0.88,
-          low: 0.83,
-          open: 0.87,
-          previousClose: 0.87,
-          sector: 'Banking',
-          marketCap: 850000000,
-          pe: 12.8,
-          dividend: 0.05,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'GCB',
-          symbol: 'GCB',
-          name: 'GCB Bank',
-          price: 4.10,
-          change: 0.10,
-          changePercent: 2.50,
-          volume: 2100000,
-          high: 4.15,
-          low: 4.00,
-          open: 4.05,
-          previousClose: 4.00,
-          sector: 'Banking',
-          marketCap: 4100000000,
-          pe: 18.5,
-          dividend: 0.25,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'SCB',
-          symbol: 'SCB',
-          name: 'Standard Chartered Bank',
-          price: 2.50,
-          change: 0.05,
-          changePercent: 2.04,
-          volume: 750000,
-          high: 2.55,
-          low: 2.45,
-          open: 2.48,
-          previousClose: 2.45,
-          sector: 'Banking',
-          marketCap: 1250000000,
-          pe: 14.2,
-          dividend: 0.15,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'EGL',
-          symbol: 'EGL',
-          name: 'Enterprise Group',
-          price: 0.95,
-          change: -0.03,
-          changePercent: -3.06,
-          volume: 450000,
-          high: 0.98,
-          low: 0.92,
-          open: 0.97,
-          previousClose: 0.98,
-          sector: 'Insurance',
-          marketCap: 475000000,
-          pe: 11.8,
-          dividend: 0.06,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'FML',
-          symbol: 'FML',
-          name: 'Fan Milk',
-          price: 0.45,
-          change: 0.02,
-          changePercent: 4.65,
-          volume: 320000,
-          high: 0.47,
-          low: 0.43,
-          open: 0.44,
-          previousClose: 0.43,
-          sector: 'Manufacturing',
-          marketCap: 225000000,
-          pe: 9.5,
-          dividend: 0.03,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'TOTAL',
-          symbol: 'TOTAL',
-          name: 'Total Petroleum',
-          price: 3.20,
-          change: 0.08,
-          changePercent: 2.56,
-          volume: 680000,
-          high: 3.25,
-          low: 3.15,
-          open: 3.18,
-          previousClose: 3.12,
-          sector: 'Oil & Gas',
-          marketCap: 1600000000,
-          pe: 16.8,
-          dividend: 0.20,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        {
-          id: 'GOIL',
-          symbol: 'GOIL',
-          name: 'Ghana Oil Company',
-          price: 1.80,
-          change: -0.05,
-          changePercent: -2.70,
-          volume: 540000,
-          high: 1.85,
-          low: 1.75,
-          open: 1.82,
-          previousClose: 1.85,
-          sector: 'Oil & Gas',
-          marketCap: 900000000,
-          pe: 13.2,
-          dividend: 0.12,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-      ];
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      return mockData;
+      // TODO: Implement actual GSE-API integration
+      // This should make real API calls to fetch live stock data
+      throw new Error('GSE-API integration not implemented - requires production API key');
     } catch (error) {
       console.error('Error fetching GSE-API data:', error);
       throw new Error('Failed to fetch data from GSE-API');
@@ -266,33 +109,9 @@ export class DataIntegrationService {
     try {
       console.log('Fetching data from GSE Data Services...');
       
-      // This would be the actual implementation for official GSE data
-      // For now, return enhanced mock data
-      const officialData: Stock[] = [
-        {
-          id: 'MTN',
-          symbol: 'MTN',
-          name: 'MTN Ghana Limited',
-          price: 1.20,
-          change: 0.05,
-          changePercent: 4.35,
-          volume: 1250000,
-          high: 1.25,
-          low: 1.15,
-          open: 1.18,
-          previousClose: 1.15,
-          sector: 'Telecommunications',
-          marketCap: 2500000000,
-          pe: 15.2,
-          dividend: 0.08,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        // Add more official data...
-      ];
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return officialData;
+      // TODO: Implement actual GSE Data Services integration
+      // This should make real API calls to the official GSE data service
+      throw new Error('GSE Data Services integration not implemented - requires production API key');
     } catch (error) {
       console.error('Error fetching GSE Data Services data:', error);
       throw new Error('Failed to fetch data from GSE Data Services');
@@ -304,32 +123,9 @@ export class DataIntegrationService {
     try {
       console.log('Fetching data from EODHD...');
       
-      // Mock implementation for EODHD
-      const eodhdData: Stock[] = [
-        {
-          id: 'MTN',
-          symbol: 'MTN',
-          name: 'MTN Ghana',
-          price: 1.19,
-          change: 0.04,
-          changePercent: 3.48,
-          volume: 1200000,
-          high: 1.24,
-          low: 1.16,
-          open: 1.17,
-          previousClose: 1.15,
-          sector: 'Telecommunications',
-          marketCap: 2475000000,
-          pe: 15.0,
-          dividend: 0.08,
-          updatedAt: new Date(),
-          lastUpdated: new Date(),
-        },
-        // Add more EODHD data...
-      ];
-
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return eodhdData;
+      // TODO: Implement actual EODHD integration
+      // This should make real API calls to EODHD API
+      throw new Error('EODHD integration not implemented - requires production API key');
     } catch (error) {
       console.error('Error fetching EODHD data:', error);
       throw new Error('Failed to fetch data from EODHD');
@@ -393,25 +189,13 @@ export class DataIntegrationService {
   }
 
   private async fetchEODHDHistoricalData(symbol: string, period: string): Promise<any[]> {
-    // Mock implementation
-    const mockHistoricalData = [
-      { date: '2024-01-01', open: 1.10, high: 1.15, low: 1.08, close: 1.12, volume: 1000000 },
-      { date: '2024-01-02', open: 1.12, high: 1.18, low: 1.10, close: 1.16, volume: 1200000 },
-      // Add more historical data...
-    ];
-    
-    return mockHistoricalData;
+    // TODO: Implement actual EODHD historical data API call
+    throw new Error('EODHD historical data API not implemented - requires production integration');
   }
 
   private async fetchGSEAPIHistoricalData(symbol: string, period: string): Promise<any[]> {
-    // Mock implementation
-    const mockHistoricalData = [
-      { date: '2024-01-01', open: 1.10, high: 1.15, low: 1.08, close: 1.12, volume: 1000000 },
-      { date: '2024-01-02', open: 1.12, high: 1.18, low: 1.10, close: 1.16, volume: 1200000 },
-      // Add more historical data...
-    ];
-    
-    return mockHistoricalData;
+    // TODO: Implement actual GSE-API historical data API call
+    throw new Error('GSE-API historical data API not implemented - requires production integration');
   }
 
   // Data quality assessment
@@ -457,9 +241,9 @@ export class DataIntegrationService {
   }
 
   private calculateAccuracy(data: Stock[]): number {
-    // Mock accuracy calculation
-    // In real implementation, this would compare with known good data
-    return 95;
+    // TODO: Implement real accuracy calculation
+    // This should compare data with known good sources or validate data integrity
+    return 95; // Placeholder - should be calculated from actual data validation
   }
 
   private calculateTimeliness(data: Stock[]): number {

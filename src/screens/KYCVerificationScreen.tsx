@@ -140,10 +140,12 @@ export const KYCVerificationScreen: React.FC = () => {
   };
 
   const handleTakePhoto = (type: 'front' | 'back' | 'selfie') => {
-    // Mock photo capture - in real app, this would use camera
-    const mockImage = `data:image/jpeg;base64,mock_image_data_${Date.now()}`;
-    setDocumentImages(prev => ({ ...prev, [type]: mockImage }));
-    Alert.alert('Photo Captured', `${type} photo captured successfully!`);
+    // TODO: Implement actual camera integration
+    // This should use expo-camera or react-native-camera to capture real photos
+    Alert.alert(
+      'Camera Integration Required', 
+      'Camera functionality needs to be implemented for production use. Please integrate with expo-camera or react-native-camera.'
+    );
   };
 
   const handleVerifyDocument = async () => {

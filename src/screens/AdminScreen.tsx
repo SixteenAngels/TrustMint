@@ -31,14 +31,14 @@ export const AdminScreen: React.FC = () => {
       ]);
 
       const stocksData = stocksSnapshot.docs.map(doc => ({
+        ...(doc.data() as Stock),
         id: doc.id,
         updatedAt: new Date(),
-        ...(doc.data() as any),
       })) as Stock[];
 
       const usersData = usersSnapshot.docs.map(doc => ({
+        ...(doc.data() as User),
         uid: doc.id,
-        ...(doc.data() as any),
       })) as User[];
 
       setStocks(stocksData);

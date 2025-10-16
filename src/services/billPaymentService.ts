@@ -277,16 +277,9 @@ export class BillPaymentService {
     try {
       const provider = this.getBillProvider(providerId);
       
-      // Mock validation - in real app, this would call provider API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Simulate validation results
-      if (accountNumber.length < 8) {
-        return {
-          isValid: false,
-          error: 'Invalid account number format',
-        };
-      }
+      // TODO: Implement actual provider API validation
+      // This should call the real bill provider API to validate account
+      throw new Error('Bill provider API validation not implemented - requires production integration');
 
       return {
         isValid: true,
@@ -360,12 +353,12 @@ export class BillPaymentService {
 
   private async checkUserBalance(userId: string, amount: number): Promise<void> {
     // This would check the user's wallet balance
-    console.log(`Checking balance for user ${userId}: ${amount}`);
+    // Check user balance
   }
 
   private async updateUserBalance(userId: string, amount: number): Promise<void> {
     // This would update the user's wallet balance
-    console.log(`Updating balance for user ${userId}: ${amount}`);
+    // Update user balance
   }
 
   private generatePaymentReference(): string {

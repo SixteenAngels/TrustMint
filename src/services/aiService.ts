@@ -83,8 +83,9 @@ export class AIService {
     try {
       const chartService = ChartService.getInstance();
       
-      // Generate sample chart data for analysis
-      const chartData = chartService.generateSampleOHLCData('1M', symbol);
+      // TODO: Fetch real historical data for analysis
+      // This should get actual historical price data for the symbol
+      const chartData = await chartService.fetchHistoricalData(symbol, '1M');
       const victoryData = chartService.convertToVictoryData(chartData);
       
       // Calculate technical indicators
@@ -286,7 +287,8 @@ export class AIService {
 
       // Volume Analysis
       if (stock.volume && stock.volume > 0) {
-        const avgVolume = 1000000; // Mock average volume
+        // TODO: Calculate real average volume from historical data
+        const avgVolume = 1000000; // Placeholder - should be calculated from historical data
         if (stock.volume > avgVolume * 1.5) {
           confidence += 10;
           reasoning.push('High trading volume - increased interest');
@@ -332,9 +334,10 @@ export class AIService {
   // Generate Sentiment Analysis Insight
   private async generateSentimentInsight(symbol: string, stock: Stock): Promise<AIInsight | null> {
     try {
-      // Mock sentiment analysis
-      const sentimentScore = Math.random() * 100 - 50; // -50 to 50
-      const confidence = Math.random() * 30 + 70; // 70-100
+      // TODO: Implement real sentiment analysis using news API or social media data
+      // This should analyze actual news articles, social media posts, etc.
+      const sentimentScore = Math.random() * 100 - 50; // Placeholder - should be real sentiment analysis
+      const confidence = Math.random() * 30 + 70; // Placeholder - should be calculated from data quality
 
       let insightType: 'buy' | 'sell' | 'hold' = 'hold';
       let reasoning: string[] = [];
@@ -392,9 +395,10 @@ export class AIService {
   // Generate News Analysis Insight
   private async generateNewsInsight(symbol: string, stock: Stock): Promise<AIInsight | null> {
     try {
-      // Mock news analysis
-      const newsImpact = Math.random() * 100;
-      const confidence = Math.random() * 20 + 80; // 80-100
+      // TODO: Implement real news analysis using news API
+      // This should fetch and analyze actual news articles about the stock
+      const newsImpact = Math.random() * 100; // Placeholder - should be calculated from real news
+      const confidence = Math.random() * 20 + 80; // Placeholder - should be calculated from data quality
 
       let insightType: 'buy' | 'sell' | 'hold' = 'hold';
       let reasoning: string[] = [];
@@ -480,11 +484,12 @@ export class AIService {
   }
 
   private async generateShortTermPrediction(symbol: string): Promise<AIPrediction | null> {
-    // Mock short-term prediction
-    const currentPrice = 1.20; // Mock current price
-    const priceChange = (Math.random() - 0.5) * 0.2; // ±10% change
+    // TODO: Implement real short-term prediction using ML models
+    // This should use actual historical data and ML algorithms
+    const currentPrice = 1.20; // Placeholder - should get real current price
+    const priceChange = (Math.random() - 0.5) * 0.2; // Placeholder - should be ML prediction
     const predictedPrice = currentPrice + priceChange;
-    const confidence = Math.random() * 20 + 70; // 70-90%
+    const confidence = Math.random() * 20 + 70; // Placeholder - should be model confidence
 
     return {
       id: `pred_short_${symbol}_${Date.now()}`,
@@ -521,11 +526,11 @@ export class AIService {
   }
 
   private async generateMediumTermPrediction(symbol: string): Promise<AIPrediction | null> {
-    // Mock medium-term prediction
-    const currentPrice = 1.20;
-    const priceChange = (Math.random() - 0.5) * 0.4; // ±20% change
+    // TODO: Implement real medium-term prediction using ML models
+    const currentPrice = 1.20; // Placeholder - should get real current price
+    const priceChange = (Math.random() - 0.5) * 0.4; // Placeholder - should be ML prediction
     const predictedPrice = currentPrice + priceChange;
-    const confidence = Math.random() * 15 + 60; // 60-75%
+    const confidence = Math.random() * 15 + 60; // Placeholder - should be model confidence
 
     return {
       id: `pred_medium_${symbol}_${Date.now()}`,
@@ -562,11 +567,11 @@ export class AIService {
   }
 
   private async generateLongTermPrediction(symbol: string): Promise<AIPrediction | null> {
-    // Mock long-term prediction
-    const currentPrice = 1.20;
-    const priceChange = (Math.random() - 0.3) * 0.8; // -24% to +56% change
+    // TODO: Implement real long-term prediction using ML models
+    const currentPrice = 1.20; // Placeholder - should get real current price
+    const priceChange = (Math.random() - 0.3) * 0.8; // Placeholder - should be ML prediction
     const predictedPrice = currentPrice + priceChange;
-    const confidence = Math.random() * 10 + 50; // 50-60%
+    const confidence = Math.random() * 10 + 50; // Placeholder - should be model confidence
 
     return {
       id: `pred_long_${symbol}_${Date.now()}`,
@@ -605,8 +610,8 @@ export class AIService {
   // Generate Portfolio Analysis
   async generatePortfolioAnalysis(userId: string): Promise<AIPortfolioAnalysis | null> {
     try {
-      // Mock portfolio analysis
-      const overallScore = Math.random() * 20 + 70; // 70-90
+      // TODO: Implement real portfolio analysis using actual user portfolio data
+      const overallScore = Math.random() * 20 + 70; // Placeholder - should analyze real portfolio
       
       const riskAssessment = {
         level: overallScore > 80 ? 'low' : overallScore > 60 ? 'medium' : 'high' as 'low' | 'medium' | 'high',
