@@ -38,7 +38,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser, signInWithApple, signInWithGoogle } = useAuth();
+  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser, signInWithGoogle } = useAuth();
 
   const handleEmailPrimary = async () => {
     setLoading(true);
@@ -146,15 +146,7 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
         </TouchableOpacity>
 
         <View style={{ height: 12 }} />
-        {Platform.OS === 'ios' && (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={8}
-            style={{ width: '100%', height: 44, marginBottom: 8 }}
-            onPress={async () => { try { await signInWithApple(); } catch {} }}
-          />
-        )}
+        {/* Apple Sign-In can be re-enabled when tokens/entitlements are ready */}
         <TouchableOpacity style={[styles.button, { backgroundColor: '#4285F4' }]} onPress={async () => { try { await signInWithGoogle(); } catch {} }}>
           <Text style={styles.buttonText}>Continue with Google</Text>
         </TouchableOpacity>

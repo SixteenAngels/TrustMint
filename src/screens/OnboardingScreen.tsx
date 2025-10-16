@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+// Deprecated: kept only to avoid build errors during transition.
+import React from 'react';
+export const OnboardingScreen: React.FC<{ onComplete: () => void }> = () => null;
+export default OnboardingScreen;
 import {
   View,
   Text,

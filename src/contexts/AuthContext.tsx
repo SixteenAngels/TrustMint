@@ -13,6 +13,10 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import { GOOGLE_CLIENT_ID, API_BASE_URL } from '../config';
+import { signInWithCustomToken } from 'firebase/auth';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -22,6 +26,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   startPhoneVerification: (phoneNumber: string, appVerifier: ApplicationVerifier) => Promise<string>;
   verifyOTP: (verificationId: string, otp: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
 }
@@ -103,6 +108,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGoogle = async (): Promise<void> => {
+    WebBrowser.maybeCompleteAuthSession();
+    const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
+    const redirectUri = AuthSession.makeRedirectUri({});
+    const authRequest = new AuthSession.AuthRequest({
+      clientId: GOOGLE_CLIENT_ID,
+      redirectUri,
+      responseType: AuthSession.ResponseType.IdToken,
+      scopes: ['openid', 'profile', 'email'],
+    });
+    const result = await authRequest.promptAsync(discovery as any);
+    if (result.type !== 'success' || !result.params.id_token) throw new Error('Google sign-in canceled');
+    const res = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: result.params.id_token }),
+    });
+    if (!res.ok) throw new Error('Google sign-in failed');
+    const { customToken } = await res.json();
+    await signInWithCustomToken(auth, customToken);
+  };
+
   const signOut = async (): Promise<void> => {
     try {
       await firebaseSignOut(auth);
@@ -133,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signInWithEmail,
     startPhoneVerification,
     verifyOTP,
+    signInWithGoogle,
     signOut,
     updateUser,
   };
