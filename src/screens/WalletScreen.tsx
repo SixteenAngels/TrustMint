@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   Animated,
+  SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { WalletService } from '../services/walletService';
@@ -337,9 +338,11 @@ export const WalletScreen: React.FC = () => {
       }
       showsVerticalScrollIndicator={false}
     >
-      {renderWalletHeader()}
-      {renderQuickActions()}
-      {renderTransactions()}
+      <SafeAreaView>
+        {renderWalletHeader()}
+        {renderQuickActions()}
+        {renderTransactions()}
+      </SafeAreaView>
     </ScrollView>
   );
 };
