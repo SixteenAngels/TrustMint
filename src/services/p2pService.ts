@@ -466,17 +466,17 @@ export class P2PService {
   private async checkSenderBalance(userId: string, amount: number): Promise<void> {
     // This would check the user's wallet balance
     // For now, we'll assume sufficient balance
-    console.log(`Checking balance for user ${userId}: ${amount}`);
+    // Check user balance
   }
 
   private async updateWalletBalance(userId: string, amount: number): Promise<void> {
     // This would update the user's wallet balance
-    console.log(`Updating balance for user ${userId}: ${amount}`);
+    // Update user balance
   }
 
   private async createTransactionRecords(transferId: string, transferData: Omit<P2PTransfer, 'id' | 'createdAt' | 'status'>): Promise<void> {
     // Create transaction records for both sender and recipient
-    console.log(`Creating transaction records for transfer ${transferId}`);
+    // Create transaction records
   }
 
   private generateUniqueAddress(): string {

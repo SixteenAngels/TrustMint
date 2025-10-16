@@ -216,7 +216,7 @@ export const DashboardScreen: React.FC = () => {
         onClose={() => setShowQuickActions(false)}
         onActionPress={(actionId) => {
           // Handle navigation to different screens based on actionId
-          console.log('Navigate to:', actionId);
+          // Navigate to action
         }}
       />
     </View>

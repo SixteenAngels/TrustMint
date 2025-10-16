@@ -136,7 +136,7 @@ export const AIInsightsScreen: React.FC = () => {
       'AI Recommendation',
       recommendation.description,
       [
-        { text: 'View Details', onPress: () => console.log('View details') },
+        { text: 'View Details', onPress: () => {} },
         { text: 'Dismiss', style: 'cancel' }
       ]
     );

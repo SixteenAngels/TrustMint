@@ -360,12 +360,12 @@ export class BillPaymentService {
 
   private async checkUserBalance(userId: string, amount: number): Promise<void> {
     // This would check the user's wallet balance
-    console.log(`Checking balance for user ${userId}: ${amount}`);
+    // Check user balance
   }
 
   private async updateUserBalance(userId: string, amount: number): Promise<void> {
     // This would update the user's wallet balance
-    console.log(`Updating balance for user ${userId}: ${amount}`);
+    // Update user balance
   }
 
   private generatePaymentReference(): string {
