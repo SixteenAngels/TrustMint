@@ -9,6 +9,9 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
 import { User } from '../types';
@@ -20,6 +23,8 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   startPhoneVerification: (phoneNumber: string) => Promise<string>;
   verifyOTP: (verificationId: string, otp: string) => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
 }
@@ -68,6 +73,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const provider = new PhoneAuthProvider(auth);
     const verificationId = await provider.verifyPhoneNumber(phoneNumber, undefined as any);
     return verificationId;
+  };
+
+  const signInWithApple = async (): Promise<void> => {
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+    // In a production app, exchange identityToken with backend to mint Firebase custom token
+    // Here, we optimistically set local user profile if available
+    if (credential.fullName?.givenName) {
+      const displayName = `${credential.fullName.givenName} ${credential.fullName.familyName ?? ''}`.trim();
+      if (auth.currentUser) await updateProfile(auth.currentUser, { displayName });
+    }
+  };
+
+  const signInWithGoogle = async (): Promise<void> => {
+    WebBrowser.maybeCompleteAuthSession();
+    const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
+    const redirectUri = AuthSession.makeRedirectUri({});
+    const authRequest = new AuthSession.AuthRequest({
+      clientId: 'GOOGLE_CLIENT_ID',
+      redirectUri,
+      responseType: AuthSession.ResponseType.IdToken,
+      scopes: ['openid', 'profile', 'email'],
+    });
+    await authRequest.promptAsync(discovery as any);
+    // Exchange ID token with backend for Firebase custom token in a real setup
   };
 
   const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
@@ -127,6 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signInWithEmail,
     startPhoneVerification,
     verifyOTP,
+    signInWithApple,
+    signInWithGoogle,
     signOut: signUserOut,
     updateUser,
   };

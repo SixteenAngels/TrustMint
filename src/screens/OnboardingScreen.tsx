@@ -12,6 +12,7 @@ import {
   Animated,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
@@ -35,7 +36,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser } = useAuth();
+  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser, signInWithApple, signInWithGoogle } = useAuth();
 
   const handleEmailPrimary = async () => {
     setLoading(true);
@@ -140,6 +141,20 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 
         <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleEmailPrimary} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? (mode === 'signup' ? 'Creating...' : 'Signing in...') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 12 }} />
+        {Platform.OS === 'ios' && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={8}
+            style={{ width: '100%', height: 44, marginBottom: 8 }}
+            onPress={async () => { try { await signInWithApple(); } catch {} }}
+          />
+        )}
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#4285F4' }]} onPress={async () => { try { await signInWithGoogle(); } catch {} }}>
+          <Text style={styles.buttonText}>Continue with Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkButton} onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}>
