@@ -15,7 +15,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-import { GOOGLE_CLIENT_ID, API_BASE_URL } from '../config';
+import { GOOGLE_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, API_BASE_URL } from '../config';
 import { signInWithCustomToken } from 'firebase/auth';
 import { User } from '../types';
 
@@ -113,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
     const redirectUri = AuthSession.makeRedirectUri({});
     const authRequest = new AuthSession.AuthRequest({
-      clientId: GOOGLE_CLIENT_ID,
+      clientId: Platform.OS === 'android' ? GOOGLE_ANDROID_CLIENT_ID : GOOGLE_CLIENT_ID,
       redirectUri,
       responseType: AuthSession.ResponseType.IdToken,
       scopes: ['openid', 'profile', 'email'],
