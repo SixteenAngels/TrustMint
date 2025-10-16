@@ -56,8 +56,9 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   const loadTechnicalData = async () => {
     setLoading(true);
     try {
-      // Generate sample OHLC data
-      const ohlcData = chartService.generateSampleOHLCData(timeRange, symbol);
+      // TODO: Fetch real OHLC data from API
+      // This should get actual historical price data for the symbol
+      const ohlcData = await chartService.fetchHistoricalData(symbol, timeRange);
       const victoryData = chartService.convertToVictoryData(ohlcData);
       setChartData(victoryData);
 

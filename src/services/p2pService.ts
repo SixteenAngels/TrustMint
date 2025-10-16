@@ -343,35 +343,27 @@ export class P2PService {
   }
 
   // Search users by phone or username
-  async searchUsers(query: string): Promise<{ id: string; displayName: string; phoneNumber?: string; username?: string }[]> {
+  async searchUsers(searchQuery: string): Promise<{ id: string; displayName: string; phoneNumber?: string; username?: string }[]> {
     try {
-      // Mock user search - in real app, this would query user profiles
-      const mockUsers = [
-        {
-          id: 'user1',
-          displayName: 'John Doe',
-          phoneNumber: '+233XXXXXXXXX',
-          username: 'john_doe',
-        },
-        {
-          id: 'user2',
-          displayName: 'Jane Smith',
-          phoneNumber: '+233YYYYYYYYY',
-          username: 'jane_smith',
-        },
-        {
-          id: 'user3',
-          displayName: 'Kwame Asante',
-          phoneNumber: '+233ZZZZZZZZZ',
-          username: 'kwame_asante',
-        },
-      ];
-
-      return mockUsers.filter(user => 
-        user.displayName.toLowerCase().includes(query.toLowerCase()) ||
-        user.username?.toLowerCase().includes(query.toLowerCase()) ||
-        user.phoneNumber?.includes(query)
+      // TODO: Implement actual user search from database
+      // This should query the users collection in Firestore
+      const usersRef = collection(db, 'users');
+      const q = query(
+        usersRef,
+        where('displayName', '>=', searchQuery),
+        where('displayName', '<=', searchQuery + '\uf8ff')
       );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        return {
+          id: doc.id,
+          displayName: data.displayName || data.name || 'Unknown User',
+          phoneNumber: data.phone,
+          username: data.username,
+        };
+      });
     } catch (error) {
       console.error('Error searching users:', error);
       throw error;

@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { AIService } from '../services/aiService';
 import { LanguageService } from '../services/languageService';
+import { StockService } from '../services/stockService';
+import { useAuth } from '../contexts/AuthContext';
 import { AIInsight, AIPrediction, AIRecommendation } from '../types/ai';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
@@ -17,6 +19,7 @@ import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 
 export const AIInsightsScreen: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'insights' | 'predictions' | 'recommendations' | 'portfolio'>('insights');
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
@@ -58,28 +61,19 @@ export const AIInsightsScreen: React.FC = () => {
 
   const loadInsights = async () => {
     try {
-      // Mock stock data for insights
-      const mockStock = {
-        id: 'MTN',
-        symbol: 'MTN',
-        name: 'MTN Ghana',
-        price: 1.20,
-        change: 0.05,
-        changePercent: 4.35,
-        volume: 1250000,
-        high: 1.25,
-        low: 1.15,
-        open: 1.18,
-        previousClose: 1.15,
-        sector: 'Telecommunications',
-        marketCap: 2500000000,
-        pe: 15.2,
-        dividend: 0.08,
-        updatedAt: new Date(),
-        lastUpdated: new Date(),
-      };
+      // TODO: Get real stock data from API
+      // This should fetch actual stock data from your data source
+      const stockService = StockService.getInstance();
+      const stocks = await stockService.getStocks();
+      
+      if (stocks.length === 0) {
+        setInsights([]);
+        return;
+      }
 
-      const stockInsights = await aiService.generateStockInsights('MTN', mockStock);
+      // Generate insights for the first available stock
+      const selectedStock = stocks[0];
+      const stockInsights = await aiService.generateStockInsights(selectedStock.symbol, selectedStock);
       setInsights(stockInsights);
     } catch (error) {
       console.error('Error loading insights:', error);
@@ -97,8 +91,8 @@ export const AIInsightsScreen: React.FC = () => {
 
   const loadRecommendations = async () => {
     try {
-      // Mock user ID
-      const userId = 'current_user_id';
+      // TODO: Get real user ID from auth context
+      const userId = user?.uid || 'current_user_id';
       const userRecommendations = await aiService.generateRecommendations(userId);
       setRecommendations(userRecommendations);
     } catch (error) {
