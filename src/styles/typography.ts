@@ -13,7 +13,6 @@ export const fonts = {
 const dynamic = (base: TextStyle): TextStyle => ({
   ...base,
   includeFontPadding: false,
-  allowFontScaling: true,
 });
 
 export const typography = {

@@ -23,30 +23,36 @@ interface OnboardingScreenProps {
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signInWithPhone, verifyOTP, updateUser } = useAuth();
+  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser } = useAuth();
 
-  const handleSendOTP = async () => {
-    if (!phoneNumber.startsWith('+233')) {
-      Alert.alert('Error', 'Please enter a valid Ghana phone number starting with +233');
-      return;
-    }
-
+  const handleEmailPrimary = async () => {
     setLoading(true);
     try {
-      const verificationId = await signInWithPhone(phoneNumber);
-      setVerificationId(verificationId);
-      setStep(2);
+      if (mode === 'signup') {
+        if (!email || !password || password !== confirmPassword) {
+          Alert.alert('Error', 'Enter a valid email and matching passwords');
+          return;
+        }
+        await signUpWithEmail(email.trim(), password, name.trim() || undefined);
+        setStep(2);
+      } else {
+        await signInWithEmail(email.trim(), password);
+        setStep(2);
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      Alert.alert('Error', mode === 'signup' ? 'Failed to sign up' : 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -111,38 +117,33 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
       </View>
       
       <View style={styles.formContainer}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Phone Number</Text>
-          <View style={styles.phoneInputContainer}>
-            <View style={styles.countryCode}>
-              <Text style={styles.countryCodeText}>🇬🇭 +233</Text>
-            </View>
-            <TextInput
-              style={styles.phoneInput}
-              placeholder="XXXXXXXXX"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              autoFocus
-            />
+        {mode === 'signup' && (
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput style={styles.input} placeholder="Your name" value={name} onChangeText={setName} />
           </View>
-          <Text style={styles.helperText}>
-            We'll send you a verification code to secure your account
-          </Text>
+        )}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+          <TextInput style={styles.input} placeholder="you@email.com" autoCapitalize="none" value={email} onChangeText={setEmail} />
         </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput style={styles.input} placeholder="••••••••" secureTextEntry value={password} onChangeText={setPassword} />
+        </View>
+        {mode === 'signup' && (
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Confirm Password</Text>
+            <TextInput style={styles.input} placeholder="••••••••" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+          </View>
+        )}
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            loading && styles.buttonDisabled,
-            !phoneNumber && styles.buttonDisabled
-          ]}
-          onPress={handleSendOTP}
-          disabled={loading || !phoneNumber}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Sending OTP...' : 'Send Verification Code'}
-          </Text>
+        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleEmailPrimary} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? (mode === 'signup' ? 'Creating...' : 'Signing in...') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.linkButton} onPress={() => setMode(mode === 'signup' ? 'signin' : 'signup')}>
+          <Text style={styles.linkText}>{mode === 'signup' ? 'Have an account? Sign In' : "New here? Create Account"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -151,21 +152,27 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Verify Your Phone</Text>
-      <Text style={styles.subtitle}>
-        Enter the 6-digit code sent to {phoneNumber}
-      </Text>
+      <Text style={styles.subtitle}>Add your number and verify to secure your account</Text>
       
       <View style={styles.inputContainer}>
+        <Text style={styles.label}>Phone (+233...)</Text>
+        <TextInput style={styles.input} placeholder="+233XXXXXXXXX" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" />
+      </View>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={async () => {
+          try { setLoading(true); const id = await startPhoneVerification(phoneNumber); setVerificationId(id); }
+          catch { Alert.alert('Error', 'Failed to send code'); }
+          finally { setLoading(false); }
+        }}
+        disabled={loading || !phoneNumber}
+      >
+        <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Code'}</Text>
+      </TouchableOpacity>
+
+      <View style={styles.inputContainer}>
         <Text style={styles.label}>Verification Code</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="123456"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={6}
-          autoFocus
-        />
+        <TextInput style={styles.input} placeholder="123456" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
       </View>
 
       <TouchableOpacity

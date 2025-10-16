@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
-  signInWithPhoneNumber, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
   PhoneAuthProvider, 
   signInWithCredential,
   signOut,
@@ -14,7 +16,9 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithPhone: (phoneNumber: string) => Promise<string>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  startPhoneVerification: (phoneNumber: string) => Promise<string>;
   verifyOTP: (verificationId: string, otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
@@ -50,15 +54,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const signInWithPhone = async (phoneNumber: string): Promise<string> => {
-    try {
-      const appVerifier: any = undefined; // Using default app verifier (Expo)
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      return confirmation.verificationId;
-    } catch (error) {
-      console.error('Error sending OTP:', error);
-      throw error;
-    }
+  const signUpWithEmail = async (email: string, password: string, name?: string): Promise<void> => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    if (name) await updateProfile(cred.user, { displayName: name });
+  };
+
+  const signInWithEmail = async (email: string, password: string): Promise<void> => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const startPhoneVerification = async (phoneNumber: string): Promise<string> => {
+    // Placeholder: integrate reCAPTCHA verifier if using web phone auth
+    const provider = new PhoneAuthProvider(auth);
+    const verificationId = await provider.verifyPhoneNumber(phoneNumber, undefined as any);
+    return verificationId;
   };
 
   const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
@@ -114,7 +123,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value: AuthContextType = {
     user,
     loading,
-    signInWithPhone,
+    signUpWithEmail,
+    signInWithEmail,
+    startPhoneVerification,
     verifyOTP,
     signOut: signUserOut,
     updateUser,
