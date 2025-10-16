@@ -1,0 +1,87 @@
+App.tsx(45,11): error TS2322: Type 'null' is not assignable to type 'Stock | undefined'.
+src/components/AdvancedChart.tsx(322,13): error TS2322: Type 'ChartDataPoint | null' is not assignable to type 'Record<string, any> | undefined'.
+  Type 'null' is not assignable to type 'Record<string, any> | undefined'.
+src/components/MarketTicker.tsx(90,8): error TS2304: Cannot find name 'shadows'.
+src/screens/AIInsightsScreen.tsx(80,74): error TS2345: Argument of type '{ symbol: string; name: string; price: number; change: number; changePercent: number; volume: number; high: number; low: number; open: number; previousClose: number; sector: string; marketCap: number; pe: number; dividend: number; lastUpdated: Date; }' is not assignable to parameter of type 'Stock'.
+  Type '{ symbol: string; name: string; price: number; change: number; changePercent: number; volume: number; high: number; low: number; open: number; previousClose: number; sector: string; marketCap: number; pe: number; dividend: number; lastUpdated: Date; }' is missing the following properties from type 'Stock': id, updatedAt
+src/screens/AdminScreen.tsx(38,25): error TS2352: Conversion of type '{ id: string; }[]' to type 'User[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; }' is missing the following properties from type 'User': uid, name, phone, verified, and 2 more.
+src/screens/AutoSaveScreen.tsx(182,47): error TS2345: Argument of type '{ userId: string; name: string; description: string; targetAmount: number; currentAmount: number; targetDate: Date; priority: "medium" | "low" | "high"; category: string; isActive: boolean; contributions: never[]; autoSaveRules: never[]; progress: number; isCompleted: boolean; }' is not assignable to parameter of type 'Omit<SavingsGoal, "progress" | "createdAt" | "updatedAt" | "id" | "isCompleted">'.
+  Types of property 'category' are incompatible.
+    Type 'string' is not assignable to type '"car" | "other" | "education" | "emergency" | "vacation" | "home" | "wedding" | "retirement"'.
+src/screens/BillPaymentScreen.tsx(154,51): error TS2345: Argument of type '{ userId: string; providerId: string; accountId: string; amount: number; currency: "GHS"; description: string; paymentMethod: any; transactionFee: number; }' is not assignable to parameter of type 'Omit<BillPayment, "createdAt" | "id" | "reference" | "status">'.
+  Property 'totalAmount' is missing in type '{ userId: string; providerId: string; accountId: string; amount: number; currency: "GHS"; description: string; paymentMethod: any; transactionFee: number; }' but required in type 'Omit<BillPayment, "createdAt" | "id" | "reference" | "status">'.
+src/screens/InvestmentVaultsScreen.tsx(382,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type '{ color: string; fontWeight: "600"; fontFamily: string; fontSize: number; lineHeight: number; }' is not assignable to type 'StyleProp<ViewStyle>'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type '{ color: string; fontWeight: "600"; fontFamily: string; fontSize: number; lineHeight: number; }' is not assignable to type 'StyleProp<ViewStyle>'.
+src/screens/InvestmentVaultsScreen.tsx(388,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type '{ color: string; fontWeight: "600"; fontFamily: string; fontSize: number; lineHeight: number; }' is not assignable to type 'StyleProp<ViewStyle>'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type '{ color: string; fontWeight: "600"; fontFamily: string; fontSize: number; lineHeight: number; }' is not assignable to type 'StyleProp<ViewStyle>'.
+src/screens/InvestmentVaultsScreen.tsx(822,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/screens/InvestmentVaultsScreen.tsx(951,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/screens/KYCVerificationScreen.tsx(338,56): error TS2345: Argument of type '(prev: Partial<AddressInfo>) => { currentAddress: { street: string; city?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to parameter of type 'SetStateAction<Partial<AddressInfo>>'.
+  Type '(prev: Partial<AddressInfo>) => { currentAddress: { street: string; city?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to type '(prevState: Partial<AddressInfo>) => Partial<AddressInfo>'.
+    Call signature return types '{ currentAddress: { street: string; city?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; coordinates?: { latitude: number; longitude: number; } | undefined; ... 4 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMet...' and 'Partial<AddressInfo>' are incompatible.
+      The types of 'currentAddress.city' are incompatible between these types.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+src/screens/KYCVerificationScreen.tsx(351,56): error TS2345: Argument of type '(prev: Partial<AddressInfo>) => { currentAddress: { city: string; street?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to parameter of type 'SetStateAction<Partial<AddressInfo>>'.
+  Type '(prev: Partial<AddressInfo>) => { currentAddress: { city: string; street?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to type '(prevState: Partial<AddressInfo>) => Partial<AddressInfo>'.
+    Call signature return types '{ currentAddress: { city: string; street?: string | undefined; region?: string | undefined; postalCode?: string | undefined; country?: string | undefined; coordinates?: { latitude: number; longitude: number; } | undefined; ... 4 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMet...' and 'Partial<AddressInfo>' are incompatible.
+      The types of 'currentAddress.street' are incompatible between these types.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+src/screens/KYCVerificationScreen.tsx(364,56): error TS2345: Argument of type '(prev: Partial<AddressInfo>) => { currentAddress: { region: string; street?: string | undefined; city?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to parameter of type 'SetStateAction<Partial<AddressInfo>>'.
+  Type '(prev: Partial<AddressInfo>) => { currentAddress: { region: string; street?: string | undefined; city?: string | undefined; postalCode?: string | undefined; country?: string | undefined; ... 5 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMethod?: "other" | ... 3 more ... | und...' is not assignable to type '(prevState: Partial<AddressInfo>) => Partial<AddressInfo>'.
+    Call signature return types '{ currentAddress: { region: string; street?: string | undefined; city?: string | undefined; postalCode?: string | undefined; country?: string | undefined; coordinates?: { latitude: number; longitude: number; } | undefined; ... 4 more ...; verificationDate?: Date | undefined; }; ... 4 more ...; addressVerificationMet...' and 'Partial<AddressInfo>' are incompatible.
+      The types of 'currentAddress.street' are incompatible between these types.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+src/screens/KYCVerificationScreen.tsx(469,30): error TS7053: Element implicitly has an 'any' type because expression of type '"pending" | "completed" | "failed" | "in_progress" | "skipped"' can't be used to index type '{ pending: string; in_progress: string; verified: string; rejected: string; expired: string; }'.
+  Property 'completed' does not exist on type '{ pending: string; in_progress: string; verified: string; rejected: string; expired: string; }'.
+src/screens/OnboardingScreen.tsx(28,27): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(29,41): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(30,25): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(31,47): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(32,27): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(33,29): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(34,25): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(35,39): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(36,33): error TS2304: Cannot find name 'useState'.
+src/screens/OnboardingScreen.tsx(38,11): error TS2339: Property 'signInWithPhone' does not exist on type 'AuthContextType'.
+src/screens/WalletScreen.tsx(132,51): error TS2339: Property 'bankName' does not exist on type 'Wallet'.
+src/services/aiService.ts(232,17): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(232,29): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(233,19): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(238,26): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(243,26): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(248,26): error TS2339: Property 'pe' does not exist on type 'Stock'.
+src/services/aiService.ts(257,17): error TS2339: Property 'dividend' does not exist on type 'Stock'.
+src/services/aiService.ts(257,35): error TS2339: Property 'dividend' does not exist on type 'Stock'.
+src/services/aiService.ts(258,38): error TS2339: Property 'dividend' does not exist on type 'Stock'.
+src/services/aiService.ts(273,17): error TS2339: Property 'marketCap' does not exist on type 'Stock'.
+src/services/aiService.ts(273,36): error TS2339: Property 'marketCap' does not exist on type 'Stock'.
+src/services/aiService.ts(274,19): error TS2339: Property 'marketCap' does not exist on type 'Stock'.
+src/services/aiService.ts(279,26): error TS2339: Property 'marketCap' does not exist on type 'Stock'.
+src/services/chartService.ts(27,24): error TS2367: This comparison appears to be unintentional because the types '1 | 5 | 30 | 90 | 180 | 365 | 1825' and '0' have no overlap.
+src/services/chartService.ts(33,22): error TS2367: This comparison appears to be unintentional because the types '1 | 5 | 30 | 90 | 180 | 365 | 1825' and '0' have no overlap.
+src/services/dataIntegrationService.ts(107,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(124,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(141,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(158,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(175,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(192,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(209,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(226,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(263,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(298,11): error TS2353: Object literal may only specify known properties, and 'high' does not exist in type 'Stock'.
+src/services/dataIntegrationService.ts(348,39): error TS18046: 'error' is of type 'unknown'.
+src/services/dataIntegrationService.ts(450,41): error TS2339: Property 'lastUpdated' does not exist on type 'Stock'.
+src/services/kycService.ts(64,9): error TS2322: Type '{ status: "pending"; retryCount: number; id: string; name: string; description: string; isRequired: boolean; order: number; estimatedDuration: number; instructions: string[]; requirements: string[]; tips: string[]; }[]' is not assignable to type 'KYCStep[]'.
+  Property 'maxRetries' is missing in type '{ status: "pending"; retryCount: number; id: string; name: string; description: string; isRequired: boolean; order: number; estimatedDuration: number; instructions: string[]; requirements: string[]; tips: string[]; }' but required in type 'KYCStep'.
+src/services/kycService.ts(377,40): error TS2339: Property 'qualityScore' does not exist on type '{ idNumber?: string | undefined; fullName?: string | undefined; dateOfBirth?: string | undefined; gender?: string | undefined; nationality?: string | undefined; address?: string | undefined; ... 10 more ...; complianceChecks?: { ...; } | undefined; }'.
+src/services/p2pService.ts(62,9): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'QRCodeData'.
