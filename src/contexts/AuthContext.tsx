@@ -10,6 +10,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -76,18 +77,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithApple = async (): Promise<void> => {
+    // Create a random nonce and its SHA256 hash for Apple
+    const rawNonce = Math.random().toString(36).substring(2);
+    const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         AppleAuthentication.AppleAuthenticationScope.EMAIL,
       ],
+      nonce: hashedNonce,
     });
-    // In a production app, exchange identityToken with backend to mint Firebase custom token
-    // Here, we optimistically set local user profile if available
-    if (credential.fullName?.givenName) {
-      const displayName = `${credential.fullName.givenName} ${credential.fullName.familyName ?? ''}`.trim();
-      if (auth.currentUser) await updateProfile(auth.currentUser, { displayName });
-    }
+    // Send credential.identityToken and rawNonce to your backend to mint a Firebase custom token
+    // Placeholder: you should implement the backend and call signInWithCustomToken here
   };
 
   const signInWithGoogle = async (): Promise<void> => {
