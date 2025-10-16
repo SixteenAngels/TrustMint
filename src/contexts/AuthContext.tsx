@@ -13,6 +13,8 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { API_BASE_URL, GOOGLE_CLIENT_ID } from '../config';
+import { signInWithCustomToken } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase.config';
 import { User } from '../types';
@@ -87,8 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ],
       nonce: hashedNonce,
     });
-    // Send credential.identityToken and rawNonce to your backend to mint a Firebase custom token
-    // Placeholder: you should implement the backend and call signInWithCustomToken here
+    // Exchange with Node backend to mint Firebase custom token
+    const res = await fetch(`${API_BASE_URL}/auth/apple`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identityToken: credential.identityToken, rawNonce }),
+    });
+    if (!res.ok) throw new Error('Apple sign-in failed');
+    const { customToken } = await res.json();
+    await signInWithCustomToken(auth, customToken);
   };
 
   const signInWithGoogle = async (): Promise<void> => {
@@ -96,13 +105,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const discovery = AuthSession.useAutoDiscovery('https://accounts.google.com');
     const redirectUri = AuthSession.makeRedirectUri({});
     const authRequest = new AuthSession.AuthRequest({
-      clientId: 'GOOGLE_CLIENT_ID',
+      clientId: GOOGLE_CLIENT_ID,
       redirectUri,
       responseType: AuthSession.ResponseType.IdToken,
       scopes: ['openid', 'profile', 'email'],
     });
-    await authRequest.promptAsync(discovery as any);
-    // Exchange ID token with backend for Firebase custom token in a real setup
+    const result = await authRequest.promptAsync(discovery as any);
+    if (result.type !== 'success' || !result.params.id_token) throw new Error('Google sign-in canceled');
+    const res = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: result.params.id_token }),
+    });
+    if (!res.ok) throw new Error('Google sign-in failed');
+    const { customToken } = await res.json();
+    await signInWithCustomToken(auth, customToken);
   };
 
   const verifyOTP = async (verificationId: string, otp: string): Promise<void> => {
