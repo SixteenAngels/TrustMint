@@ -129,7 +129,7 @@ export const WalletScreen: React.FC = () => {
           <View style={styles.walletInfo}>
             <Text style={styles.walletLabel}>Mint Wallet</Text>
             <Text style={styles.accountNumber}>{wallet.accountNumber}</Text>
-            <Text style={styles.bankName}>{wallet.bankName}</Text>
+            <Text style={styles.bankName}>{wallet.bankCode}</Text>
           </View>
           
           <View style={styles.balanceContainer}>

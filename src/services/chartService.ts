@@ -23,7 +23,7 @@ export class ChartService {
 
   // Generate sample OHLC data for demonstration
   generateSampleOHLCData(timeRange: string, symbol: string): OHLCData[] {
-    const days = CHART_TIME_RANGES.find(range => range.value === timeRange)?.days || 30;
+    const days = CHART_TIME_RANGES.find(range => range.value === timeRange)?.days ?? 30;
     const dataPoints = days === 0 ? 1000 : Math.min(days * 24, 1000); // Max 1000 points
     const data: OHLCData[] = [];
     

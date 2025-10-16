@@ -36,7 +36,21 @@ export const KYCVerificationScreen: React.FC = () => {
 
   // Form states
   const [personalInfo, setPersonalInfo] = useState<Partial<PersonalInfo>>({});
-  const [addressInfo, setAddressInfo] = useState<Partial<AddressInfo>>({});
+  const [addressInfo, setAddressInfo] = useState<Partial<AddressInfo>>({
+    currentAddress: {
+      street: '',
+      city: '',
+      region: '',
+      postalCode: '',
+      country: 'Ghana',
+      isResidential: true,
+      isBusiness: false,
+      isMailing: true,
+      verificationStatus: 'pending',
+    },
+    previousAddresses: [],
+    addressVerificationStatus: 'pending',
+  });
   const [documentImages, setDocumentImages] = useState<{ front?: string; back?: string; selfie?: string }>({});
 
   const kycService = KYCService.getInstance();
@@ -336,8 +350,8 @@ export const KYCVerificationScreen: React.FC = () => {
                 placeholder="Enter your street address"
                 value={addressInfo.currentAddress?.street || ''}
                 onChangeText={(text) => setAddressInfo(prev => ({
-                  ...prev,
-                  currentAddress: { ...prev.currentAddress, street: text }
+                  ...(prev || {}),
+                  currentAddress: { ...(prev?.currentAddress || addressInfo.currentAddress!), street: text }
                 }))}
               />
             </View>
@@ -349,8 +363,8 @@ export const KYCVerificationScreen: React.FC = () => {
                 placeholder="Enter your city"
                 value={addressInfo.currentAddress?.city || ''}
                 onChangeText={(text) => setAddressInfo(prev => ({
-                  ...prev,
-                  currentAddress: { ...prev.currentAddress, city: text }
+                  ...(prev || {}),
+                  currentAddress: { ...(prev?.currentAddress || addressInfo.currentAddress!), city: text }
                 }))}
               />
             </View>
@@ -362,8 +376,8 @@ export const KYCVerificationScreen: React.FC = () => {
                 placeholder="Enter your region"
                 value={addressInfo.currentAddress?.region || ''}
                 onChangeText={(text) => setAddressInfo(prev => ({
-                  ...prev,
-                  currentAddress: { ...prev.currentAddress, region: text }
+                  ...(prev || {}),
+                  currentAddress: { ...(prev?.currentAddress || addressInfo.currentAddress!), region: text }
                 }))}
               />
             </View>
@@ -445,12 +459,12 @@ export const KYCVerificationScreen: React.FC = () => {
                 <View 
                   style={[
                     styles.progressFill, 
-                    { width: `${kycProfile.verificationSteps.filter(step => step.status === 'completed').length / kycProfile.verificationSteps.length * 100}%` }
+                    { width: `${(kycProfile.verificationSteps.filter(s => s.status === 'completed').length / kycProfile.verificationSteps.length) * 100}%` }
                   ]} 
                 />
               </View>
               <Text style={styles.progressText}>
-                {kycProfile.verificationSteps.filter(step => step.status === 'completed').length} of {kycProfile.verificationSteps.length} steps completed
+                {kycProfile.verificationSteps.filter(s => s.status === 'completed').length} of {kycProfile.verificationSteps.length} steps completed
               </Text>
             </View>
 
@@ -464,10 +478,10 @@ export const KYCVerificationScreen: React.FC = () => {
                      step.status === 'failed' ? '❌' : '⭕'}
                   </Text>
                   <Text style={styles.stepStatusName}>{step.name}</Text>
-                  <Text style={[
-                    styles.stepStatusText,
-                    { color: KYC_STATUS_COLORS[step.status] }
-                  ]}>
+            <Text style={[ 
+              styles.stepStatusText,
+              { color: KYC_STATUS_COLORS[step.status as keyof typeof KYC_STATUS_COLORS] }
+            ]}>
                     {step.status.toUpperCase()}
                   </Text>
                 </View>

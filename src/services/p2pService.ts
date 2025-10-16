@@ -57,10 +57,8 @@ export class P2PService {
         createdAt: serverTimestamp(),
       });
 
-      return {
-        ...qrData,
-        id: qrRef.id,
-      };
+      // QRCodeData type does not include id; return same shape
+      return qrData;
     } catch (error) {
       console.error('Error generating payment QR code:', error);
       throw error;

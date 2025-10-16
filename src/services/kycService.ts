@@ -65,6 +65,7 @@ export class KYCService {
           ...step,
           status: 'pending',
           retryCount: 0,
+          maxRetries: 3,
         })),
         personalInfo: {
           firstName: '',
@@ -374,7 +375,7 @@ export class KYCService {
                 verifiedAt: new Date(),
                 metadata: result ? {
                   confidence: result.confidence,
-                  quality: result.data.qualityScore || 0,
+                  quality: (result.data as any).qualityScore || 0,
                   faceMatch: result.data.faceMatch,
                   livenessCheck: result.data.livenessCheck,
                 } : doc.metadata

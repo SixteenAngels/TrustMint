@@ -52,7 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithPhone = async (phoneNumber: string): Promise<string> => {
     try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber);
+      const appVerifier: any = undefined; // Using default app verifier (Expo)
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       return confirmation.verificationId;
     } catch (error) {
       console.error('Error sending OTP:', error);
@@ -87,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async (): Promise<void> => {
+  const signUserOut = async (): Promise<void> => {
     try {
       await signOut(auth);
       setUser(null);
@@ -115,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signInWithPhone,
     verifyOTP,
-    signOut,
+    signOut: signUserOut,
     updateUser,
   };
 

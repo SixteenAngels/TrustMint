@@ -171,7 +171,7 @@ export const AutoSaveScreen: React.FC = () => {
         currentAmount: 0,
         targetDate: new Date(targetDate),
         priority: goalPriority,
-        category: goalCategory || 'other',
+        category: (goalCategory || 'other') as 'emergency' | 'vacation' | 'education' | 'home' | 'car' | 'wedding' | 'retirement' | 'other',
         isActive: true,
         contributions: [],
         autoSaveRules: [],
