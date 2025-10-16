@@ -17,11 +17,11 @@ import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 
-interface OnboardingScreenProps {
+interface AuthenticationScreenProps {
   onComplete: () => void;
 }
 
-export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
