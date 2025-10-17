@@ -420,33 +420,6 @@ export class SocialService {
       // TODO: Implement real social analytics from database
       // This should query user engagement data and calculate metrics
       throw new Error('Social analytics not implemented - requires production database integration');
-        userId,
-        period: period as any,
-        followers: {
-          total: 1250,
-          gained: 45,
-          lost: 12,
-          growth: 2.7,
-        },
-        engagement: {
-          totalLikes: 3420,
-          totalComments: 890,
-          totalShares: 234,
-          avgEngagement: 4.2,
-        },
-        content: {
-          postsCount: 156,
-          avgLikesPerPost: 21.9,
-          avgCommentsPerPost: 5.7,
-          avgSharesPerPost: 1.5,
-        },
-        trading: {
-          tradesShared: 89,
-          copyTradesReceived: 234,
-          totalCopied: 1567,
-          copySuccessRate: 78.5,
-        },
-      };
     } catch (error) {
       console.error('Error getting social analytics:', error);
       throw error;

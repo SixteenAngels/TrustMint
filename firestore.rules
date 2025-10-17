@@ -1,20 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own data
+    // Users can read/write their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Allow reading portfolio and transactions
-      match /portfolio/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      match /transactions/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      match /notifications/{document=**} {
+      // Users can read/write their own subcollections
+      match /{subcollection}/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
@@ -22,7 +14,67 @@ service cloud.firestore {
     // Stocks are readable by all authenticated users
     match /stocks/{stockId} {
       allow read: if request.auth != null;
-      allow write: if false; // Only Cloud Functions can write
+      allow write: if false; // Only backend can write to stocks
+    }
+    
+    // Wallets are readable/writable by owner
+    match /wallets/{walletId} {
+      allow read, write: if request.auth != null && request.auth.uid == walletId;
+    }
+    
+    // P2P transfers are readable by participants
+    match /p2pTransfers/{transferId} {
+      allow read: if request.auth != null && 
+        (resource.data.senderId == request.auth.uid || 
+         resource.data.recipientId == request.auth.uid);
+      allow write: if request.auth != null && 
+        (resource.data.senderId == request.auth.uid || 
+         resource.data.recipientId == request.auth.uid);
+    }
+    
+    // Bill payments are readable by owner
+    match /billPayments/{paymentId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Price alerts are readable by owner
+    match /priceAlerts/{alertId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Social posts are readable by all, writable by owner
+    match /social/posts/{postId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Leaderboard is readable by all
+    match /leaderboard/{period} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only backend can write
+    }
+    
+    // Payment records are readable by owner
+    match /zeepayPayments/{paymentId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only backend can write
+    }
+    
+    // Virtual accounts are readable by owner
+    match /virtualAccounts/{accountId} {
+      allow read: if request.auth != null && request.auth.uid == accountId;
+      allow write: if false; // Only backend can write
+    }
+    
+    // Wallet settings are readable/writable by owner
+    match /walletSettings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Scheduled notifications are readable by owner
+    match /scheduledNotifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only backend can write
     }
     
     // Lessons are readable by all authenticated users
@@ -31,16 +83,15 @@ service cloud.firestore {
       allow write: if false; // Only admins can write
     }
     
-    // Price alerts are user-specific
-    match /priceAlerts/{alertId} {
-      allow read, write: if request.auth != null && 
-        resource.data.userId == request.auth.uid;
-    }
-    
     // Admin collections (only accessible by admins)
     match /admin/{document=**} {
       allow read, write: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Migration status is not accessible to users
+    match /_migrations/{document=**} {
+      allow read, write: if false;
     }
   }
 }
