@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Text } from 'react-native';
@@ -142,5 +143,15 @@ export default function App() {
         <AppContent />
       </WalletProvider>
     </AuthProvider>
+=======
+import React from 'react';
+import { View, Text } from 'react-native';
+
+export default function App() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>TrustMint App is running!</Text>
+    </View>
+>>>>>>> 5ebe4ce (Initial commit: Add app documentation, update dependencies, and proper .gitignore)
   );
 }
