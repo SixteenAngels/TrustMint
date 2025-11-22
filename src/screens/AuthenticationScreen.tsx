@@ -13,17 +13,22 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
-import { firebaseConfig } from '../../firebase.config';
+import { firebaseConfig } from '../core/firebase';
+import { ENABLE_PHONE_VERIFICATION, IS_DEV } from '../config';
+import { useTheme } from '../contexts/ThemeContext';
+import { SFSymbol } from '../components/SFSymbols';
 
 interface AuthenticationScreenProps {
   onComplete: () => void;
 }
 
 export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onComplete }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const recaptchaVerifier = useRef<any>(null);
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
@@ -37,8 +42,16 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [managerEmail, setManagerEmail] = useState('');
+  const [managerPassword, setManagerPassword] = useState('');
+  const [managerLoading, setManagerLoading] = useState(false);
+  const [showManagerLogin, setShowManagerLogin] = useState(false);
 
-  const { signUpWithEmail, signInWithEmail, startPhoneVerification, verifyOTP, updateUser, signInWithGoogle } = useAuth();
+  const { signUpWithEmail, signInWithEmail, signInAsAdmin, signInAsManager, startPhoneVerification, verifyOTP, updateUser, signInWithGoogle, bypassAuth, bypassAdminAuth, bypassManagerAuth } = useAuth();
 
   const handleEmailPrimary = async () => {
     setLoading(true);
@@ -49,13 +62,15 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
           return;
         }
         await signUpWithEmail(email.trim(), password, name.trim() || undefined);
-        setStep(2);
+        setStep(ENABLE_PHONE_VERIFICATION ? 2 : 3);
       } else {
         await signInWithEmail(email.trim(), password);
-        setStep(2);
+        setStep(ENABLE_PHONE_VERIFICATION ? 2 : 3);
       }
-    } catch (error) {
-      Alert.alert('Error', mode === 'signup' ? 'Failed to sign up' : 'Failed to sign in');
+    } catch (error: any) {
+      const errorMessage = error?.message || (mode === 'signup' ? 'Failed to sign up' : 'Failed to sign in');
+      Alert.alert('Error', errorMessage);
+      console.error('Authentication error:', error);
     } finally {
       setLoading(false);
     }
@@ -109,11 +124,47 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
     }
   };
 
+  const handleAdminLogin = async () => {
+    if (!adminEmail || !adminPassword) {
+      Alert.alert('Error', 'Please enter admin email and password');
+      return;
+    }
+
+    setAdminLoading(true);
+    try {
+      await signInAsAdmin(adminEmail.trim(), adminPassword);
+      onComplete();
+    } catch (error: any) {
+      Alert.alert('Admin Login Failed', error.message || 'Invalid admin credentials');
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleManagerLogin = async () => {
+    if (!managerEmail || !managerPassword) {
+      Alert.alert('Error', 'Please enter manager email and password');
+      return;
+    }
+
+    setManagerLoading(true);
+    try {
+      await signInAsManager(managerEmail.trim(), managerPassword);
+      onComplete();
+    } catch (error: any) {
+      Alert.alert('Manager Login Failed', error.message || 'Invalid manager credentials');
+    } finally {
+      setManagerLoading(false);
+    }
+  };
+
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoEmoji}>💹</Text>
+          <View style={styles.logoIcon}>
+            <SFSymbol name="chart.line.uptrend.xyaxis" size={48} color={colors.primary} />
+          </View>
         </View>
         <Text style={styles.title}>Welcome to Mint Trade</Text>
         <Text style={styles.subtitle}>Ghana's Smart Stock Trading App</Text>
@@ -145,9 +196,24 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
           <Text style={styles.buttonText}>{loading ? (mode === 'signup' ? 'Creating...' : 'Signing in...') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 12 }} />
-        {/* Apple Sign-In can be re-enabled when tokens/entitlements are ready */}
-        <TouchableOpacity style={[styles.button, { backgroundColor: '#4285F4' }]} onPress={async () => { try { await signInWithGoogle(); } catch {} }}>
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity 
+          style={[styles.button, styles.googleButton]} 
+          onPress={async () => { 
+            try { 
+              await signInWithGoogle(); 
+              onComplete();
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to sign in with Google');
+            }
+          }}
+        >
+          <SFSymbol name="globe" size={20} color={colors.textWhite} />
           <Text style={styles.buttonText}>Continue with Google</Text>
         </TouchableOpacity>
 
@@ -287,14 +353,150 @@ export const AuthenticationScreen: React.FC<AuthenticationScreenProps> = ({ onCo
       />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
+        {ENABLE_PHONE_VERIFICATION && step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
+        <View style={styles.bypassContainer}>
+          <TouchableOpacity
+            style={styles.bypassButton}
+            onPress={() => {
+              bypassAuth();
+              onComplete();
+            }}
+          >
+            <Text style={styles.bypassText}>Continue without signing in</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Admin Login Section */}
+        <View style={styles.adminContainer}>
+          <TouchableOpacity
+            style={styles.adminToggle}
+            onPress={() => setShowAdminLogin(!showAdminLogin)}
+          >
+            <Text style={styles.adminToggleText}>
+              {showAdminLogin ? '▼ Hide Admin Login' : '▶ Admin Login'}
+            </Text>
+          </TouchableOpacity>
+
+          {showAdminLogin && (
+            <View style={styles.adminForm}>
+              <Text style={styles.adminTitle}>Admin Access</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Admin Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="admin@minttrade.com"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={adminEmail}
+                  onChangeText={setAdminEmail}
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Admin Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  secureTextEntry
+                  value={adminPassword}
+                  onChangeText={setAdminPassword}
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.button, styles.adminButton, adminLoading && styles.buttonDisabled]}
+                onPress={handleAdminLogin}
+                disabled={adminLoading}
+              >
+                <Text style={styles.buttonText}>
+                  {adminLoading ? 'Signing in...' : 'Sign In as Admin'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Admin Bypass Button (Dev Only) */}
+              {IS_DEV && (
+                <TouchableOpacity
+                  style={[styles.button, styles.adminBypassButton]}
+                  onPress={() => {
+                    bypassAdminAuth();
+                    onComplete();
+                  }}
+                >
+                  <SFSymbol name="wrench.and.screwdriver" size={18} color={colors.textWhite} />
+                  <Text style={styles.buttonText}>Bypass Admin Login (Dev)</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Manager Login Section */}
+          <View style={styles.adminContainer}>
+            <TouchableOpacity
+              style={styles.adminToggle}
+              onPress={() => setShowManagerLogin(!showManagerLogin)}
+            >
+              <Text style={styles.adminToggleText}>
+                {showManagerLogin ? '▼ Hide Manager Login' : '▶ Manager Login'}
+              </Text>
+            </TouchableOpacity>
+            {showManagerLogin && (
+              <View style={styles.adminForm}>
+                <Text style={styles.adminTitle}>Manager Access</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Manager Email</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.textPrimary }]}
+                    placeholder="manager@minttrade.com"
+                    placeholderTextColor={colors.textSecondary}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={managerEmail}
+                    onChangeText={setManagerEmail}
+                  />
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Manager Password</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.textPrimary }]}
+                    placeholder="Enter password"
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry
+                    value={managerPassword}
+                    onChangeText={setManagerPassword}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={[styles.button, styles.adminButton, managerLoading && styles.buttonDisabled]}
+                  onPress={handleManagerLogin}
+                  disabled={managerLoading}
+                >
+                  <Text style={styles.buttonText}>
+                    {managerLoading ? 'Signing in...' : 'Sign In as Manager'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Manager Bypass Button (Dev Only) */}
+                {IS_DEV && (
+                  <TouchableOpacity
+                    style={[styles.button, styles.adminBypassButton]}
+                    onPress={() => {
+                      bypassManagerAuth();
+                      onComplete();
+                    }}
+                  >
+                    <SFSymbol name="wrench.and.screwdriver" size={18} color={colors.textWhite} />
+                    <Text style={styles.buttonText}>Bypass Manager Login (Dev)</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -313,16 +515,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxxl,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
-    ...shadows.card,
   },
-  logoEmoji: { fontSize: 32 },
+  logoIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.lg,
+  },
   title: {
     ...typography.h2,
     color: colors.textPrimary,
@@ -348,7 +552,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     fontSize: 16,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
     color: colors.textPrimary,
   },
   button: {
@@ -356,10 +560,32 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.lg,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
     ...shadows.button,
   },
-  buttonDisabled: { backgroundColor: colors.border },
+  buttonDisabled: { backgroundColor: colors.border, opacity: 0.6 },
   buttonText: { ...typography.button, color: colors.textWhite },
+  googleButton: {
+    backgroundColor: '#4285F4',
+    marginTop: spacing.sm,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginHorizontal: spacing.md,
+  },
   linkButton: { alignItems: 'center', marginTop: spacing.lg },
   linkText: { ...typography.bodyMedium, color: colors.primary },
   welcomeContainer: {
@@ -372,4 +598,57 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
   },
   welcomeText: { ...typography.bodyMedium, color: colors.success, textAlign: 'center' },
+  bypassContainer: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+  },
+  bypassButton: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  bypassText: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
+  },
+  adminContainer: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  adminToggle: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  adminToggleText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  adminForm: {
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  adminTitle: {
+    ...typography.h5,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  adminButton: {
+    backgroundColor: colors.accent,
+    marginTop: spacing.sm,
+  },
+  adminBypassButton: {
+    backgroundColor: colors.warning,
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

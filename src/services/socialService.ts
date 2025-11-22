@@ -14,7 +14,8 @@ import {
   SocialTradingSettings,
   Badge
 } from '../types/social';
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
 
 const db = firestore();
 
@@ -34,8 +35,8 @@ export class SocialService {
       const profileRef = await db.collection('userProfiles').add({
         ...profileData,
         userId,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
       return profileRef.id;
     } catch (error) {
@@ -82,7 +83,7 @@ export class SocialService {
       const profileRef = db.collection('userProfiles').doc(snapshot.docs[0].id);
       await profileRef.update({
         ...updates,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -102,7 +103,7 @@ export class SocialService {
       const followRef = await db.collection('follows').add({
         followerId,
         followingId,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
         status: 'active',
       });
 
@@ -168,7 +169,7 @@ export class SocialService {
         .limit(limitCount)
         .get();
       
-      const followerIds = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data().followerId);
+      const followerIds = snapshot.docs.map((doc: any) => doc.data().followerId);
       const profiles: UserProfile[] = [];
       
       for (const followerId of followerIds) {
@@ -192,7 +193,7 @@ export class SocialService {
         .limit(limitCount)
         .get();
       
-      const followingIds = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data().followingId);
+      const followingIds = snapshot.docs.map((doc: any) => doc.data().followingId);
       const profiles: UserProfile[] = [];
       
       for (const followingId of followingIds) {
@@ -212,7 +213,7 @@ export class SocialService {
     try {
       const alertRef = await db.collection('tradeAlerts').add({
         ...alertData,
-        timestamp: firestore.FieldValue.serverTimestamp(),
+        timestamp: (firestore as any).FieldValue.serverTimestamp(),
         likes: 0,
         comments: 0,
         shares: 0,
@@ -241,7 +242,7 @@ export class SocialService {
       
       const snapshot = await alertsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -269,7 +270,7 @@ export class SocialService {
         .limit(limitCount)
         .get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -288,7 +289,7 @@ export class SocialService {
     try {
       const copyTradeRef = await db.collection('copyTrades').add({
         ...copyTradeData,
-        timestamp: firestore.FieldValue.serverTimestamp(),
+        timestamp: (firestore as any).FieldValue.serverTimestamp(),
         status: 'pending',
         profit: 0,
       });
@@ -307,7 +308,7 @@ export class SocialService {
         .limit(limitCount)
         .get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -338,7 +339,7 @@ export class SocialService {
     try {
       const messageRef = await db.collection('directMessages').add({
         ...messageData,
-        timestamp: firestore.FieldValue.serverTimestamp(),
+        timestamp: (firestore as any).FieldValue.serverTimestamp(),
         isRead: false,
       });
       return messageRef.id;
@@ -357,7 +358,7 @@ export class SocialService {
         .limit(limitCount)
         .get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -377,33 +378,6 @@ export class SocialService {
       // TODO: Implement real social analytics from database
       // This should query user engagement data and calculate metrics
       throw new Error('Social analytics not implemented - requires production database integration');
-        userId,
-        period: period as any,
-        followers: {
-          total: 1250,
-          gained: 45,
-          lost: 12,
-          growth: 2.7,
-        },
-        engagement: {
-          totalLikes: 3420,
-          totalComments: 890,
-          totalShares: 234,
-          avgEngagement: 4.2,
-        },
-        content: {
-          postsCount: 156,
-          avgLikesPerPost: 21.9,
-          avgCommentsPerPost: 5.7,
-          avgSharesPerPost: 1.5,
-        },
-        trading: {
-          tradesShared: 89,
-          copyTradesReceived: 234,
-          totalCopied: 1567,
-          copySuccessRate: 78.5,
-        },
-      };
     } catch (error) {
       console.error('Error getting social analytics:', error);
       throw error;

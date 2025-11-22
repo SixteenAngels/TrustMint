@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,44 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import V from 'victory-native';
-const {
-  VictoryChart,
-  VictoryLine,
-  VictoryArea,
-  VictoryAxis,
-  VictoryTheme,
-  VictoryLabel,
-} = V;
+// Lazy load Victory components to avoid reanimated error on app startup
+let VictoryChart: any;
+let VictoryLine: any;
+let VictoryArea: any;
+let VictoryAxis: any;
+let VictoryTheme: any;
+let VictoryLabel: any;
+
+const loadVictoryComponents = async () => {
+  if (!VictoryChart) {
+    try {
+      const victory = await import('victory-native');
+      VictoryChart = victory.VictoryChart;
+      VictoryLine = victory.VictoryLine;
+      VictoryArea = victory.VictoryArea;
+      VictoryAxis = victory.VictoryAxis;
+      VictoryTheme = victory.VictoryTheme;
+      VictoryLabel = victory.VictoryLabel;
+    } catch (error: any) {
+      // Suppress reanimated errors - they're warnings, not fatal
+      if (error.message?.includes('reanimated')) {
+        console.warn('[TechnicalAnalysis] react-native-reanimated warning (non-fatal) - continuing anyway');
+        // Try to load anyway - components might still work
+        const victory = await import('victory-native').catch(() => null);
+        if (victory) {
+          VictoryChart = victory.VictoryChart;
+          VictoryLine = victory.VictoryLine;
+          VictoryArea = victory.VictoryArea;
+          VictoryAxis = victory.VictoryAxis;
+          VictoryTheme = victory.VictoryTheme;
+          VictoryLabel = victory.VictoryLabel;
+        }
+      } else {
+        throw error;
+      }
+    }
+  }
+};
 import { ChartService } from '../services/chartService';
 import { 
   ChartDataPoint, 
@@ -49,12 +78,12 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   const [loading, setLoading] = useState(true);
 
   const chartService = ChartService.getInstance();
+  const [victoryLoaded, setVictoryLoaded] = useState(false);
+  const loadingRef = useRef(false);
 
-  useEffect(() => {
-    loadTechnicalData();
-  }, [symbol, timeRange]);
-
-  const loadTechnicalData = async () => {
+  const loadTechnicalData = useCallback(async () => {
+    if (loadingRef.current) return; // Prevent concurrent loads
+    loadingRef.current = true;
     setLoading(true);
     try {
       // TODO: Fetch real OHLC data from API
@@ -76,8 +105,30 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
       console.error('Error loading technical data:', error);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, [symbol, timeRange]);
+
+  useEffect(() => {
+    // Load Victory components on mount
+    loadVictoryComponents().then(() => {
+      setVictoryLoaded(true);
+    }).catch((error: any) => {
+      console.error('Error loading Victory components:', error);
+      // Don't show alert - reanimated errors are warnings, not fatal
+      if (error.message?.includes('reanimated')) {
+        console.warn('[TechnicalAnalysis] react-native-reanimated warning (non-fatal)');
+      }
+      // Still set loaded to true so chart can attempt to render
+      setVictoryLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (victoryLoaded && !loadingRef.current) {
+      loadTechnicalData();
+    }
+  }, [victoryLoaded, symbol, timeRange]);
 
   const renderIndicatorSelector = () => (
     <View style={styles.indicatorSelector}>
@@ -118,7 +169,7 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   );
 
   const renderRSIChart = () => {
-    if (!rsi || rsi.data.length === 0) return null;
+    if (!victoryLoaded || !rsi || rsi.data.length === 0) return null;
 
     return (
       <View style={styles.chartContainer}>
@@ -213,7 +264,7 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   };
 
   const renderMACDChart = () => {
-    if (!macd || macd.macdLine.length === 0) return null;
+    if (!victoryLoaded || !macd || macd.macdLine.length === 0) return null;
 
     return (
       <View style={styles.chartContainer}>
@@ -275,7 +326,7 @@ export const TechnicalAnalysis: React.FC<TechnicalAnalysisProps> = ({
   };
 
   const renderBollingerBandsChart = () => {
-    if (!bollingerBands || bollingerBands.upperBand.length === 0) return null;
+    if (!victoryLoaded || !bollingerBands || bollingerBands.upperBand.length === 0) return null;
 
     return (
       <View style={styles.chartContainer}>

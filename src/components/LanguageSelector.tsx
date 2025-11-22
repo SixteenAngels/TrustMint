@@ -8,7 +8,8 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { LanguageService, Language } from '../services/languageService';
+import { LanguageService } from '../services/languageService';
+import { Language } from '../types/ai';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';

@@ -8,12 +8,15 @@ import {
   Alert,
 } from 'react-native';
 import { AuthService } from '../services/authService';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +31,9 @@ const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await authService.signUp(name, phone, password);
+      // Convert phone to email format for now, or use phone authentication
+      const email = `${phone.replace(/\D/g, '')}@trustmint.app`;
+      await authService.signUp(email, password);
     } catch (error: any) {
       Alert.alert('Sign Up Failed', error.message);
     } finally {
@@ -79,7 +84,7 @@ const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

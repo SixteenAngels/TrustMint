@@ -1,4 +1,20 @@
-import functions from '@react-native-firebase/functions';
+// Use compatibility layer for Expo (web SDK)
+import { functions } from '../core/firebase/functionsAdapter';
+
+const env = (name: string, fallback?: string) =>
+  process.env[name] ??
+  process.env[`EXPO_PUBLIC_${name}`] ??
+  fallback;
+
+// Payment Gateway API Keys (with placeholders)
+const FLUTTERWAVE_PUBLIC_KEY = env('FLUTTERWAVE_PUBLIC_KEY') || 'your_flutterwave_public_key_here';
+const FLUTTERWAVE_SECRET_KEY = env('FLUTTERWAVE_SECRET_KEY') || 'your_flutterwave_secret_key_here';
+const STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY') || 'your_stripe_public_key_here';
+const STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY') || 'your_stripe_secret_key_here';
+const ZEEPAY_API_KEY = env('ZEEPAY_API_KEY') || 'your_zeepay_api_key_here';
+const MTN_MOMO_API_KEY = env('MTN_MOMO_API_KEY') || 'your_mtn_momo_api_key_here';
+const VODAFONE_CASH_API_KEY = env('VODAFONE_CASH_API_KEY') || 'your_vodafone_cash_api_key_here';
+const AIRTELTIGO_MONEY_API_KEY = env('AIRTELTIGO_MONEY_API_KEY') || 'your_airteltigo_money_api_key_here';
 
 // Zeepay Payment Types
 export interface ZeepayPaymentRequest {
@@ -83,6 +99,22 @@ export class PaymentService {
         fees: { percentage: 0.5, fixed: 0 },
       },
       {
+        id: 'flutterwave',
+        type: 'card',
+        name: 'Flutterwave',
+        icon: '💳',
+        isActive: FLUTTERWAVE_PUBLIC_KEY && !FLUTTERWAVE_PUBLIC_KEY.includes('your_'),
+        fees: { percentage: 1.4, fixed: 0 },
+      },
+      {
+        id: 'stripe',
+        type: 'card',
+        name: 'Stripe',
+        icon: '💳',
+        isActive: STRIPE_PUBLIC_KEY && !STRIPE_PUBLIC_KEY.includes('your_'),
+        fees: { percentage: 2.9, fixed: 0.3 },
+      },
+      {
         id: 'visa_mastercard',
         type: 'card',
         name: 'Visa/Mastercard',
@@ -99,6 +131,146 @@ export class PaymentService {
         fees: { percentage: 0, fixed: 10 },
       },
     ];
+  }
+
+  // ============================================
+  // Flutterwave Integration
+  // ============================================
+
+  async processFlutterwavePayment(
+    amount: number,
+    email: string,
+    phone: string,
+    name: string,
+    currency: string = 'GHS'
+  ): Promise<any> {
+    if (!FLUTTERWAVE_PUBLIC_KEY || FLUTTERWAVE_PUBLIC_KEY.includes('your_')) {
+      throw new Error('Flutterwave API key not configured');
+    }
+
+    try {
+      const flutterwaveFunction = functions().httpsCallable('flutterwaveInitiatePayment');
+      const result = await flutterwaveFunction({
+        amount,
+        email,
+        phone,
+        name,
+        currency,
+        publicKey: FLUTTERWAVE_PUBLIC_KEY,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error processing Flutterwave payment:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Stripe Integration
+  // ============================================
+
+  async processStripePayment(
+    amount: number,
+    currency: string = 'usd',
+    paymentMethodId: string,
+    description?: string
+  ): Promise<any> {
+    if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY.includes('your_')) {
+      throw new Error('Stripe API key not configured');
+    }
+
+    try {
+      const stripeFunction = functions().httpsCallable('stripeCreatePaymentIntent');
+      const result = await stripeFunction({
+        amount: Math.round(amount * 100), // Stripe uses cents
+        currency,
+        paymentMethodId,
+        description,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error processing Stripe payment:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Direct Mobile Money APIs
+  // ============================================
+
+  async processMTNMobileMoney(
+    amount: number,
+    phone: string,
+    description: string
+  ): Promise<any> {
+    if (!MTN_MOMO_API_KEY || MTN_MOMO_API_KEY.includes('your_')) {
+      // Fallback to Zeepay if MTN API not configured
+      return this.processMobileMoneyPayment(amount, phone, 'MTN', description);
+    }
+
+    try {
+      const mtnFunction = functions().httpsCallable('mtnMobileMoneyPayment');
+      const result = await mtnFunction({
+        amount,
+        phone,
+        description,
+        apiKey: MTN_MOMO_API_KEY,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error processing MTN Mobile Money:', error);
+      throw error;
+    }
+  }
+
+  async processVodafoneCash(
+    amount: number,
+    phone: string,
+    description: string
+  ): Promise<any> {
+    if (!VODAFONE_CASH_API_KEY || VODAFONE_CASH_API_KEY.includes('your_')) {
+      // Fallback to Zeepay if Vodafone API not configured
+      return this.processMobileMoneyPayment(amount, phone, 'VODAFONE', description);
+    }
+
+    try {
+      const vodafoneFunction = functions().httpsCallable('vodafoneCashPayment');
+      const result = await vodafoneFunction({
+        amount,
+        phone,
+        description,
+        apiKey: VODAFONE_CASH_API_KEY,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error processing Vodafone Cash:', error);
+      throw error;
+    }
+  }
+
+  async processAirtelTigoMoney(
+    amount: number,
+    phone: string,
+    description: string
+  ): Promise<any> {
+    if (!AIRTELTIGO_MONEY_API_KEY || AIRTELTIGO_MONEY_API_KEY.includes('your_')) {
+      // Fallback to Zeepay if AirtelTigo API not configured
+      return this.processMobileMoneyPayment(amount, phone, 'AIRTELTIGO', description);
+    }
+
+    try {
+      const airteltigoFunction = functions().httpsCallable('airteltigoMoneyPayment');
+      const result = await airteltigoFunction({
+        amount,
+        phone,
+        description,
+        apiKey: AIRTELTIGO_MONEY_API_KEY,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error processing AirtelTigo Money:', error);
+      throw error;
+    }
   }
 
   // Initiate payment

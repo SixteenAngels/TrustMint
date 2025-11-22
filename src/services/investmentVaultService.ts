@@ -4,7 +4,8 @@ import {
   UserVaultInvestment,
   VAULT_CATEGORIES 
 } from '../types/savings';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
 
 const db = firestore();
 
@@ -28,16 +29,16 @@ export class InvestmentVaultService {
 
       const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
           holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
-            lastUpdated: holding.lastUpdated?.toDate() || new Date(),
+            lastUpdated: (holding.lastUpdated as any)?.toDate?.() || holding.lastUpdated || new Date(),
           })) || [],
         } as InvestmentVault;
       });
@@ -57,14 +58,17 @@ export class InvestmentVaultService {
       }
 
       const data = vaultDoc.data();
+      if (!data) {
+        throw new Error('Vault data not found');
+      }
       return {
         id: vaultDoc.id,
         ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
+        createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+        updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
         holdings: data.holdings?.map((holding: VaultHolding) => ({
           ...holding,
-          lastUpdated: holding.lastUpdated?.toDate() || new Date(),
+          lastUpdated: (holding.lastUpdated as any)?.toDate?.() || holding.lastUpdated || new Date(),
         })) || [],
       } as InvestmentVault;
     } catch (error) {
@@ -83,16 +87,16 @@ export class InvestmentVaultService {
 
       const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
           holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
-            lastUpdated: holding.lastUpdated?.toDate() || new Date(),
+            lastUpdated: (holding.lastUpdated as any)?.toDate?.() || holding.lastUpdated || new Date(),
           })) || [],
         } as InvestmentVault;
       });
@@ -113,16 +117,16 @@ export class InvestmentVaultService {
 
       const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
           holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
-            lastUpdated: holding.lastUpdated?.toDate() || new Date(),
+            lastUpdated: (holding.lastUpdated as any)?.toDate?.() || holding.lastUpdated || new Date(),
           })) || [],
         } as InvestmentVault;
       });
@@ -143,16 +147,16 @@ export class InvestmentVaultService {
 
       const snapshot = await vaultsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
           holdings: data.holdings?.map((holding: VaultHolding) => ({
             ...holding,
-            lastUpdated: holding.lastUpdated?.toDate() || new Date(),
+            lastUpdated: (holding.lastUpdated as any)?.toDate?.() || holding.lastUpdated || new Date(),
           })) || [],
         } as InvestmentVault;
       });
@@ -208,13 +212,13 @@ export class InvestmentVaultService {
         gainLossPercentage: 0,
         totalContributions: amount,
         totalWithdrawals: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Update vault stats
       await db.collection('investmentVaults').doc(vaultId).update({
-        totalInvestors: firestore.FieldValue.increment(1),
-        totalAssets: firestore.FieldValue.increment(amount),
+        totalInvestors: (firestore as any).FieldValue.increment(1),
+        totalAssets: (firestore as any).FieldValue.increment(amount),
       });
 
       return investmentRef.id;
@@ -234,14 +238,14 @@ export class InvestmentVaultService {
 
       const snapshot = await investmentsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          lastContribution: data.lastContribution?.toDate(),
-          nextAutoInvest: data.nextAutoInvest?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          lastContribution: (data.lastContribution as any)?.toDate?.() || data.lastContribution,
+          nextAutoInvest: (data.nextAutoInvest as any)?.toDate?.() || data.nextAutoInvest,
         } as UserVaultInvestment;
       });
     } catch (error) {
@@ -260,12 +264,15 @@ export class InvestmentVaultService {
       }
 
       const data = investmentDoc.data();
+      if (!data) {
+        throw new Error('Investment data not found');
+      }
       return {
         id: investmentDoc.id,
         ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        lastContribution: data.lastContribution?.toDate(),
-        nextAutoInvest: data.nextAutoInvest?.toDate(),
+        createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+        lastContribution: (data.lastContribution as any)?.toDate?.(),
+        nextAutoInvest: (data.nextAutoInvest as any)?.toDate?.(),
       } as UserVaultInvestment;
     } catch (error) {
       console.error('Error getting vault investment by ID:', error);
@@ -291,13 +298,13 @@ export class InvestmentVaultService {
       await db.collection('userVaultInvestments').doc(investmentId).update({
         amount: newTotalAmount,
         shares: newShares,
-        totalContributions: firestore.FieldValue.increment(amount),
-        lastContribution: firestore.FieldValue.serverTimestamp(),
+        totalContributions: (firestore as any).FieldValue.increment(amount),
+        lastContribution: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Update vault total assets
       await db.collection('investmentVaults').doc(investment.vaultId).update({
-        totalAssets: firestore.FieldValue.increment(amount),
+        totalAssets: (firestore as any).FieldValue.increment(amount),
       });
     } catch (error) {
       console.error('Error adding to vault investment:', error);
@@ -328,12 +335,12 @@ export class InvestmentVaultService {
       await db.collection('userVaultInvestments').doc(investmentId).update({
         amount: newAmount,
         shares: newShares,
-        totalWithdrawals: firestore.FieldValue.increment(amount),
+        totalWithdrawals: (firestore as any).FieldValue.increment(amount),
       });
 
       // Update vault total assets
       await db.collection('investmentVaults').doc(investment.vaultId).update({
-        totalAssets: firestore.FieldValue.increment(-amount),
+        totalAssets: (firestore as any).FieldValue.increment(-amount),
       });
     } catch (error) {
       console.error('Error withdrawing from vault investment:', error);
@@ -458,7 +465,7 @@ export class InvestmentVaultService {
     switch (frequency) {
       case 'daily':
         return new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      case 'weekly
+      case 'weekly':
         return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       case 'monthly':
         return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -573,8 +580,8 @@ export class InvestmentVaultService {
       for (const vault of sampleVaults) {
         await db.collection('investmentVaults').add({
           ...vault,
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          createdAt: (firestore as any).FieldValue.serverTimestamp(),
+          updatedAt: (firestore as any).FieldValue.serverTimestamp(),
         });
       }
     } catch (error) {

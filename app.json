@@ -4,6 +4,7 @@
     "slug": "mint-trade",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "trustmint",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {

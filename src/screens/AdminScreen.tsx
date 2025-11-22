@@ -1,300 +1,281 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
-import { AdminService } from '../services/adminService';
-import { Stock, User } from '../types';
-import { colors } from '../styles/colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { SFSymbol } from '../components/SFSymbols';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { AdminDashboard } from '../components/admin/AdminDashboard';
+import { UsersAndKYC } from '../components/admin/UsersAndKYC';
+import { TradingAndMarkets } from '../components/admin/TradingAndMarkets';
+import { FinanceAndPayments } from '../components/admin/FinanceAndPayments';
+import { SettingsAndSystem } from '../components/admin/SettingsAndSystem';
+import { AIControlCenter } from '../components/admin/AIControlCenter';
+
+type AdminSection = 
+  | 'dashboard' 
+  | 'users' 
+  | 'trading' 
+  | 'finance' 
+  | 'settings';
 
 export const AdminScreen: React.FC = () => {
-  const [stocks, setStocks] = useState<Stock[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'stocks' | 'users'>('stocks');
-  const adminService = AdminService.getInstance();
+  const { theme } = useTheme();
+  const { user, signOut } = useAuth();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
+  const [showAIControl, setShowAIControl] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [stocksData, usersData] = await Promise.all([
-        adminService.getStocks(),
-        adminService.getUsers(),
-      ]);
-      setStocks(stocksData);
-      setUsers(usersData);
-    } catch (error) {
-      console.error('Error loading admin data:', error);
-      Alert.alert('Error', 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: signOut },
+      ]
+    );
   };
 
-  const addStock = async () => {
-    Alert.prompt('Add New Stock', 'Enter stock symbol:', async (symbol) => {
-      if (symbol) {
-        try {
-          await adminService.addStock(symbol);
-          loadData();
-          Alert.alert('Success', 'Stock added successfully');
-        } catch (error) {
-          Alert.alert('Error', 'Failed to add stock');
-        }
-      }
-    });
-  };
+  const sections: { id: AdminSection; label: string; emoji: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', emoji: '📊' },
+    { id: 'users', label: 'Users', emoji: '👤' },
+    { id: 'trading', label: 'Trading', emoji: '📈' },
+    { id: 'finance', label: 'Finance', emoji: '💰' },
+    { id: 'settings', label: 'Settings', emoji: '⚙️' },
+  ];
 
-  const updateStockPrice = async (stockId: string, newPrice: number) => {
-    try {
-      await adminService.updateStockPrice(stockId, newPrice);
-      loadData();
-      Alert.alert('Success', 'Stock price updated');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update stock price');
-    }
-  };
-
-  const renderStocksTab = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Manage Stocks</Text>
-        <TouchableOpacity style={styles.addButton} onPress={addStock}>
-          <Text style={styles.addButtonText}>+ Add Stock</Text>
-        </TouchableOpacity>
-      </View>
-
-      {stocks.map((stock) => (
-        <View key={stock.id} style={styles.card}>
-          <View style={styles.cardRow}>
-            <Text style={styles.stockSymbol}>{stock.symbol}</Text>
-            <Text style={styles.stockName}>{stock.name}</Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Text style={styles.stockPrice}>₵{stock.price.toFixed(2)}</Text>
+  const renderSection = () => {
+    if (showAIControl) {
+      return (
+        <View style={styles.aiControlContainer}>
+          <View style={[styles.aiControlHeader, { backgroundColor: colors.backgroundSecondary }]}>
             <TouchableOpacity
-              style={styles.updateButton}
-              onPress={() => {
-                Alert.prompt(
-                  'Update Price',
-                  `Enter new price for ${stock.symbol}:`,
-                  (priceText) => {
-                    const price = parseFloat(priceText || '0');
-                    if (price > 0) {
-                      updateStockPrice(stock.id, price);
-                    }
-                  }
-                );
-              }}
+              style={styles.backButton}
+              onPress={() => setShowAIControl(false)}
             >
-              <Text style={styles.updateButtonText}>Update</Text>
+              <SFSymbol name="chevron.left" size={20} color={colors.textPrimary} />
+              <Text style={[styles.backButtonText, { color: colors.textPrimary }]}>Back to Dashboard</Text>
+            </TouchableOpacity>
+            <Text style={[styles.aiControlTitle, { color: colors.textPrimary }]}>🤖 AI Control Center</Text>
+          </View>
+          <AIControlCenter />
+        </View>
+      );
+    }
+
+    switch (activeSection) {
+      case 'dashboard':
+        return <AdminDashboard onOpenAIControl={() => setShowAIControl(true)} />;
+      case 'users':
+        return <UsersAndKYC />;
+      case 'trading':
+        return <TradingAndMarkets />;
+      case 'finance':
+        return <FinanceAndPayments />;
+      case 'settings':
+        return <SettingsAndSystem />;
+      default:
+        return <AdminDashboard onOpenAIControl={() => setShowAIControl(true)} />;
+    }
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.backgroundSecondary }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>🛠 Admin Panel</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+              {user?.name || 'Admin'}
+            </Text>
+          </View>
+          <View style={styles.headerRight}>
+            <View style={[styles.statusBadge, { backgroundColor: colors.successLight }]}>
+              <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+              <Text style={[styles.statusText, { color: colors.success }]}>Online</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.signOutButton, { backgroundColor: colors.errorLight }]}
+              onPress={handleSignOut}
+            >
+              <SFSymbol name="arrow.right.square" size={18} color={colors.error} />
             </TouchableOpacity>
           </View>
         </View>
-      ))}
-    </View>
-  );
-
-  const renderUsersTab = () => (
-    <View style={styles.tabContent}>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Manage Users</Text>
-        <Text style={styles.userCount}>{users.length} users</Text>
       </View>
 
-      {users.map((user) => (
-        <View key={user.uid} style={styles.card}>
-          <View style={styles.cardRow}>
-            <Text style={styles.userName}>{user.name || 'No name'}</Text>
-            <Text style={[
-              styles.userStatus,
-              { color: user.verified ? colors.success : colors.error }
-            ]}>
-              {user.verified ? 'Verified' : 'Unverified'}
-            </Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Text style={styles.userPhone}>{user.phone}</Text>
-            <Text style={styles.userBalance}>
-              Balance: ₵{user.balance?.toFixed(2) || '0.00'}
-            </Text>
-          </View>
+      {/* Main Content */}
+      <View style={styles.mainContent}>
+        {renderSection()}
+      </View>
+
+      {/* Bottom Navigation */}
+      <SafeAreaView style={styles.bottomNavContainer} edges={['bottom']}>
+        <View style={[styles.bottomNav, { backgroundColor: colors.backgroundSecondary, borderTopColor: colors.border }]}>
+          {sections.map((section) => (
+            <TouchableOpacity
+              key={section.id}
+              style={styles.navItem}
+              onPress={() => setActiveSection(section.id)}
+            >
+              <View style={[
+                styles.navIconContainer,
+                activeSection === section.id && { backgroundColor: colors.primaryLight },
+              ]}>
+                <Text style={styles.navEmoji}>{section.emoji}</Text>
+              </View>
+              <Text
+                style={[
+                  styles.navLabel,
+                  { color: activeSection === section.id ? colors.primary : colors.textSecondary },
+                  activeSection === section.id && styles.navLabelActive,
+                ]}
+              >
+                {section.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      ))}
-    </View>
-  );
-
-  if (loading) {
-    return <ActivityIndicator style={styles.loader} />;
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Admin Panel</Text>
-      </View>
-
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'stocks' && styles.activeTab]}
-          onPress={() => setActiveTab('stocks')}
-        >
-          <Text style={[styles.tabText, activeTab === 'stocks' && styles.activeTabText]}>
-            Stocks
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'users' && styles.activeTab]}
-          onPress={() => setActiveTab('users')}
-        >
-          <Text style={[styles.tabText, activeTab === 'users' && styles.activeTabText]}>
-            Users
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView>
-        {activeTab === 'stocks' ? renderStocksTab() : renderUsersTab()}
-      </ScrollView>
-    </View>
+      </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
-    backgroundColor: colors.backgroundSecondary,
     paddingTop: spacing.xxxl,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-    ...shadows.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    ...shadows.sm,
   },
-  title: {
-    ...typography.h2,
-    color: colors.textPrimary,
-  },
-  tabBar: {
+  headerContent: {
     flexDirection: 'row',
-    backgroundColor: colors.backgroundSecondary,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  tab: {
+  headerLeft: {
     flex: 1,
-    padding: spacing.md,
-    alignItems: 'center',
   },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
-  },
-  tabText: {
-    ...typography.bodyMedium,
-    color: colors.textSecondary,
-  },
-  activeTabText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  tabContent: {
-    padding: spacing.lg,
-  },
-  headerRow: {
+  headerRight: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
-  sectionTitle: {
-    ...typography.h5,
-    color: colors.textPrimary,
+  headerTitle: {
+    ...typography.h2,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
   },
-  addButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
+  headerSubtitle: {
+    ...typography.bodySmall,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
-    borderRadius: 8,
-    ...shadows.button,
-  },
-  addButtonText: {
-    ...typography.bodySmall,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  userCount: {
-    ...typography.bodyMedium,
-    color: colors.textSecondary,
-  },
-  card: {
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: 12,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...shadows.card,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  stockSymbol: {
-    ...typography.h5,
-    color: colors.textPrimary,
-  },
-  stockName: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  stockPrice: {
-    ...typography.h5,
-    color: colors.primary,
-  },
-  updateButton: {
-    backgroundColor: colors.success,
     paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: 6,
+    borderRadius: 20,
+    gap: spacing.xs,
   },
-  updateButtonText: {
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
     ...typography.caption,
-    color: '#fff',
     fontWeight: '600',
   },
-  userName: {
-    ...typography.h5,
-    color: colors.textPrimary,
+  signOutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  userStatus: {
-    ...typography.bodySmall,
-    fontWeight: '600',
+  mainContent: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  userPhone: {
-    ...typography.body,
-    color: colors.textSecondary,
+  bottomNavContainer: {
+    backgroundColor: colors.backgroundSecondary,
   },
-  userBalance: {
-    ...typography.body,
-    color: colors.primary,
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    borderTopWidth: 1,
+    ...shadows.sm,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+  },
+  navIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  navEmoji: {
+    fontSize: 22,
+  },
+  navLabel: {
+    ...typography.caption,
+    fontSize: 10,
     fontWeight: '500',
+    textAlign: 'center',
+  },
+  navLabelActive: {
+    fontWeight: '600',
+  },
+  aiControlContainer: {
+    flex: 1,
+  },
+  aiControlHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.md,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  backButtonText: {
+    ...typography.body,
+    fontWeight: '500',
+  },
+  aiControlTitle: {
+    ...typography.h5,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
 });

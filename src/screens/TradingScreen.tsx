@@ -16,13 +16,14 @@ import { Stock } from '../types';
 
 interface TradingScreenProps {
   stock?: Stock;
+  tradeType?: 'buy' | 'sell';
   onClose: () => void;
 }
 
-export const TradingScreen: React.FC<TradingScreenProps> = ({ stock, onClose }) => {
+export const TradingScreen: React.FC<TradingScreenProps> = ({ stock, tradeType: initialTradeType, onClose }) => {
   const { user } = useAuth();
   const [selectedStock, setSelectedStock] = useState<Stock | undefined>(stock);
-  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+  const [tradeType, setTradeType] = useState<'buy' | 'sell'>(initialTradeType || 'buy');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,10 @@ export const TradingScreen: React.FC<TradingScreenProps> = ({ stock, onClose }) 
     if (selectedStock) {
       setPrice(selectedStock.price.toString());
     }
-  }, []);
+    if (initialTradeType) {
+      setTradeType(initialTradeType);
+    }
+  }, [initialTradeType]);
 
   const loadStocks = async () => {
     try {
@@ -233,8 +237,8 @@ export const TradingScreen: React.FC<TradingScreenProps> = ({ stock, onClose }) 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={styles.closeButton}>✕</Text>
+        <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Trade Stocks</Text>
         <View style={styles.placeholder} />
@@ -280,6 +284,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#000',
+    fontWeight: '600',
   },
   closeButton: {
     fontSize: 24,

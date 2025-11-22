@@ -12,14 +12,17 @@ import {
 } from 'react-native';
 import { P2PService } from '../services/p2pService';
 import { P2PTransfer, P2PContact, QRCodeData } from '../types/payments';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export const P2PPaymentScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'send' | 'receive' | 'history' | 'contacts'>('send');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -470,7 +473,7 @@ export const P2PPaymentScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

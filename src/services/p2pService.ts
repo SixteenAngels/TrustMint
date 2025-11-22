@@ -5,7 +5,8 @@ import {
   P2PContact,
   P2P_TRANSFER_LIMITS 
 } from '../types/payments';
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
 
 const db = firestore();
 
@@ -42,7 +43,7 @@ export class P2PService {
       const qrRef = await db.collection('qrCodes').add({
         ...qrData,
         userId,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // QRCodeData type does not include id; return same shape
@@ -122,7 +123,7 @@ export class P2PService {
 
       const transferRef = await db.collection('p2pTransfers').add({
         ...transfer,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return {
@@ -160,7 +161,7 @@ export class P2PService {
 
       const transferRef = await db.collection('p2pTransfers').add({
         ...transfer,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return {
@@ -191,7 +192,7 @@ export class P2PService {
         ...transferData,
         transactionFee,
         status: 'processing',
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Process transfer
@@ -216,7 +217,7 @@ export class P2PService {
       // Update transfer status
       await db.collection('p2pTransfers').doc(transferId).update({
         status: 'completed',
-        completedAt: firestore.FieldValue.serverTimestamp(),
+        completedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Create transaction records
@@ -240,16 +241,17 @@ export class P2PService {
 
       const snapshot = await transfersQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
+        if (!data) return null;
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          completedAt: data.completedAt?.toDate(),
-          expiresAt: data.expiresAt?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          completedAt: (data.completedAt as any)?.toDate?.(),
+          expiresAt: (data.expiresAt as any)?.toDate?.(),
         } as P2PTransfer;
-      });
+      }).filter(Boolean) as P2PTransfer[];
     } catch (error) {
       console.error('Error getting P2P transfers:', error);
       throw error;
@@ -266,16 +268,17 @@ export class P2PService {
 
       const snapshot = await transfersQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
+        if (!data) return null;
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          completedAt: data.completedAt?.toDate(),
-          expiresAt: data.expiresAt?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          completedAt: (data.completedAt as any)?.toDate?.(),
+          expiresAt: (data.expiresAt as any)?.toDate?.(),
         } as P2PTransfer;
-      });
+      }).filter(Boolean) as P2PTransfer[];
     } catch (error) {
       console.error('Error getting received transfers:', error);
       throw error;
@@ -289,7 +292,7 @@ export class P2PService {
         ...contactData,
         totalTransactions: 0,
         totalAmount: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return contactRef.id;
@@ -309,15 +312,16 @@ export class P2PService {
 
       const snapshot = await contactsQuery.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.DocumentSnapshot) => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
+        if (!data) return null;
         return {
           id: doc.id,
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          lastTransaction: data.lastTransaction?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          lastTransaction: (data.lastTransaction as any)?.toDate?.(),
         } as P2PContact;
-      });
+      }).filter(Boolean) as P2PContact[];
     } catch (error) {
       console.error('Error getting contacts:', error);
       throw error;
@@ -329,15 +333,13 @@ export class P2PService {
     try {
       // TODO: Implement actual user search from database
       // This should query the users collection in Firestore
-      const usersRef = collection(db, 'users');
-      const q = query(
-        usersRef,
-        where('displayName', '>=', searchQuery),
-        where('displayName', '<=', searchQuery + '\uf8ff')
-      );
+      const usersRef = db.collection('users');
+      const querySnapshot = await usersRef
+        .where('displayName', '>=', searchQuery)
+        .where('displayName', '<=', searchQuery + '\uf8ff')
+        .get();
       
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => {
+      return querySnapshot.docs.map((doc: any) => {
         const data = doc.data() as any;
         return {
           id: doc.id,
@@ -368,7 +370,7 @@ export class P2PService {
 
       const addressRef = await db.collection('walletAddresses').add({
         ...walletAddress,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return {
@@ -422,7 +424,10 @@ export class P2PService {
       .where('status', '==', 'completed');
 
     const dailySnapshot = await dailyTransfersQuery.get();
-    const dailyTotal = dailySnapshot.docs.reduce((sum: number, doc: { data: () => { amount: any; }; }) => sum + doc.data().amount, 0);
+    const dailyTotal = dailySnapshot.docs.reduce((sum: number, doc: any) => {
+      const data = doc.data();
+      return sum + (data?.amount || 0);
+    }, 0);
 
     if (dailyTotal + amount > P2P_TRANSFER_LIMITS.daily) {
       throw new Error(`Daily transfer limit exceeded. Maximum: ₵${P2P_TRANSFER_LIMITS.daily}`);

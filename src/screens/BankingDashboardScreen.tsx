@@ -8,14 +8,17 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export const BankingDashboardScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'overview' | 'accounts' | 'cards' | 'loans' | 'investments'>('overview');
   const [loading, setLoading] = useState(false);
 
@@ -230,7 +233,7 @@ export const BankingDashboardScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

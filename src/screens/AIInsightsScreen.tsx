@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,24 +13,29 @@ import { AIService } from '../services/aiService';
 import { LanguageService } from '../services/languageService';
 import { StockService } from '../services/stockService';
 import { useAuth } from '../contexts/AuthContext';
-import { AIInsight, AIPrediction, AIRecommendation } from '../types/ai';
+import { AIInsight, AIPrediction, AIRecommendation, AIPortfolioAnalysis } from '../types/ai';
 import { Stock } from '../types';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const AIInsightsScreen: React.FC = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const colors = theme.colors;
   const [activeTab, setActiveTab] = useState<'insights' | 'predictions' | 'recommendations' | 'portfolio'>('insights');
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
   const [recommendations, setRecommendations] = useState<AIRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [portfolioAnalysis, setPortfolioAnalysis] = useState<AIPortfolioAnalysis | null>(null);
+  const [loadingPortfolio, setLoadingPortfolio] = useState(false);
 
   const aiService = AIService.getInstance();
   const languageService = LanguageService.getInstance();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     loadInitialData();
@@ -43,8 +48,11 @@ export const AIInsightsScreen: React.FC = () => {
       loadPredictions();
     } else if (activeTab === 'recommendations') {
       loadRecommendations();
+    } else if (activeTab === 'portfolio' && user) {
+      loadPortfolioAnalysis();
     }
-  }, [activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -61,21 +69,47 @@ export const AIInsightsScreen: React.FC = () => {
     }
   };
 
+  const loadPortfolioAnalysis = useCallback(async () => {
+    if (!user) return;
+    setLoadingPortfolio(true);
+    try {
+      const analysis = await aiService.generatePortfolioAnalysis(user.uid || user.id);
+      setPortfolioAnalysis(analysis);
+    } catch (error) {
+      console.error('Error loading portfolio analysis:', error);
+    } finally {
+      setLoadingPortfolio(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const loadInsights = async () => {
     try {
       // Get real stock data from API
       const stockService = StockService.getInstance();
-      const stocks = await stockService.getStocks();
+      const stocks = await stockService.fetchLiveData();
       
       if (stocks.length === 0) {
         setInsights([]);
         return;
       }
 
-      // Generate insights for the first available stock
-      const selectedStock = stocks[0];
-      const stockInsights = await aiService.generateStockInsights(selectedStock.symbol, selectedStock);
-      setInsights(stockInsights);
+      // Generate insights for top 3-5 stocks (most active or highest volume)
+      const topStocks = stocks
+        .sort((a, b) => (b.volume || 0) - (a.volume || 0))
+        .slice(0, 5);
+      
+      const allInsights: AIInsight[] = [];
+      for (const stock of topStocks) {
+        try {
+          const stockInsights = await aiService.generateStockInsights(stock.symbol, stock);
+          allInsights.push(...stockInsights);
+        } catch (err) {
+          console.error(`Error generating insights for ${stock.symbol}:`, err);
+        }
+      }
+      
+      setInsights(allInsights);
     } catch (error) {
       console.error('Error loading insights:', error);
     }
@@ -359,11 +393,165 @@ export const AIInsightsScreen: React.FC = () => {
     </ScrollView>
   );
 
-  const renderPortfolio = () => (
-    <View style={styles.portfolioContainer}>
-      <Text style={styles.comingSoonText}>Portfolio AI Analysis coming soon!</Text>
-    </View>
-  );
+  const renderPortfolio = () => {
+    if (loadingPortfolio) {
+      return (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Analyzing your portfolio...</Text>
+        </View>
+      );
+    }
+
+    if (!user) {
+      return (
+        <View style={styles.portfolioContainer}>
+          <Text style={styles.comingSoonText}>Sign in to view portfolio analysis</Text>
+        </View>
+      );
+    }
+
+    if (!portfolioAnalysis) {
+      return (
+        <View style={styles.portfolioContainer}>
+          <Text style={styles.comingSoonText}>No portfolio data available</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView 
+        style={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={loadPortfolioAnalysis} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Overall Score */}
+        <View style={styles.portfolioCard}>
+          <Text style={styles.portfolioTitle}>Portfolio Health Score</Text>
+          <View style={styles.scoreContainer}>
+            <Text style={styles.scoreValue}>{portfolioAnalysis.overallScore}</Text>
+            <Text style={styles.scoreLabel}>/ 100</Text>
+          </View>
+          <View style={styles.scoreBar}>
+            <View 
+              style={[
+                styles.scoreBarFill,
+                { 
+                  width: `${portfolioAnalysis.overallScore}%`,
+                  backgroundColor: portfolioAnalysis.overallScore >= 70 ? colors.success : 
+                                   portfolioAnalysis.overallScore >= 50 ? colors.warning : colors.error
+                }
+              ]} 
+            />
+          </View>
+        </View>
+
+        {/* Risk Assessment */}
+        <View style={styles.portfolioCard}>
+          <Text style={styles.portfolioTitle}>Risk Assessment</Text>
+          <View style={styles.riskContainer}>
+            <View style={[
+              styles.riskBadge,
+              { backgroundColor: portfolioAnalysis.riskAssessment.level === 'low' ? colors.success :
+                                   portfolioAnalysis.riskAssessment.level === 'medium' ? colors.warning : colors.error }
+            ]}>
+              <Text style={styles.riskText}>{portfolioAnalysis.riskAssessment.level.toUpperCase()}</Text>
+            </View>
+            <Text style={styles.riskScore}>Score: {portfolioAnalysis.riskAssessment.score}/100</Text>
+          </View>
+          <View style={styles.portfolioFactorsContainer}>
+            {portfolioAnalysis.riskAssessment.factors.map((factor, index) => (
+              <Text key={index} style={styles.portfolioFactorItem}>• {factor}</Text>
+            ))}
+          </View>
+        </View>
+
+        {/* Diversification */}
+        <View style={styles.portfolioCard}>
+          <Text style={styles.portfolioTitle}>Diversification</Text>
+          <Text style={styles.diversificationScore}>
+            Score: {portfolioAnalysis.diversification.score}/100
+          </Text>
+          
+          {portfolioAnalysis.diversification.sectors.map((sector, index) => (
+            <View key={index} style={styles.sectorItem}>
+              <View style={styles.sectorHeader}>
+                <Text style={styles.sectorName}>{sector.sector}</Text>
+                <View style={[
+                  styles.recommendationBadge,
+                  { backgroundColor: sector.recommendation === 'overweight' ? colors.success :
+                                     sector.recommendation === 'underweight' ? colors.error : colors.warning }
+                ]}>
+                  <Text style={styles.recommendationText}>{sector.recommendation}</Text>
+                </View>
+              </View>
+              <View style={styles.sectorMetrics}>
+                <Text style={styles.sectorMetric}>Allocation: {sector.allocation.toFixed(1)}%</Text>
+                <Text style={[
+                  styles.sectorMetric,
+                  { color: sector.performance >= 0 ? colors.success : colors.error }
+                ]}>
+                  Performance: {sector.performance >= 0 ? '+' : ''}{sector.performance.toFixed(1)}%
+                </Text>
+              </View>
+              <Text style={styles.sectorReasoning}>{sector.reasoning}</Text>
+            </View>
+          ))}
+
+          <View style={styles.recommendationsBox}>
+            <Text style={styles.recommendationsTitle}>Diversification Recommendations:</Text>
+            {portfolioAnalysis.diversification.recommendations.map((rec, index) => (
+              <Text key={index} style={styles.recommendationItem}>• {rec}</Text>
+            ))}
+          </View>
+        </View>
+
+        {/* Performance */}
+        <View style={styles.portfolioCard}>
+          <Text style={styles.portfolioTitle}>Performance</Text>
+          <Text style={styles.performanceScore}>
+            Score: {portfolioAnalysis.performance.score}/100
+          </Text>
+          <Text style={styles.benchmarkText}>
+            vs Benchmark: {portfolioAnalysis.performance.vsBenchmark >= 0 ? '+' : ''}
+            {portfolioAnalysis.performance.vsBenchmark.toFixed(1)}%
+          </Text>
+          <View style={styles.trendsContainer}>
+            {portfolioAnalysis.performance.trends.map((trend, index) => (
+              <Text key={index} style={styles.trendItem}>✓ {trend}</Text>
+            ))}
+          </View>
+        </View>
+
+        {/* Recommendations */}
+        {portfolioAnalysis.recommendations.length > 0 && (
+          <View style={styles.portfolioCard}>
+            <Text style={styles.portfolioTitle}>AI Recommendations</Text>
+            {portfolioAnalysis.recommendations.map((rec, index) => (
+              <View key={index} style={styles.portfolioRecommendationCard}>
+                <View style={styles.portfolioRecommendationHeader}>
+                  <Text style={styles.portfolioRecommendationSymbol}>{rec.symbol}</Text>
+                  <View style={[
+                    styles.priorityBadge,
+                    { backgroundColor: getPriorityColor(rec.priority) }
+                  ]}>
+                    <Text style={styles.priorityText}>{rec.priority.toUpperCase()}</Text>
+                  </View>
+                </View>
+                <Text style={styles.portfolioRecommendationAction}>{rec.action}</Text>
+                <Text style={styles.portfolioRecommendationReasoning}>{rec.reasoning}</Text>
+                <View style={styles.portfolioRecommendationFooter}>
+                  <Text style={styles.portfolioRecommendationType}>{rec.type.toUpperCase()}</Text>
+                  <Text style={styles.portfolioRecommendationImpact}>Impact: {rec.impact}/10</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
 
   const getConfidenceColor = (confidence: number): string => {
     if (confidence >= 80) return colors.success;
@@ -408,7 +596,7 @@ export const AIInsightsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -781,6 +969,197 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     ...typography.h4,
+    color: colors.textSecondary,
+  },
+  portfolioCard: {
+    backgroundColor: colors.backgroundSecondary,
+    margin: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: 16,
+    ...shadows.card,
+  },
+  portfolioTitle: {
+    ...typography.h5,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: spacing.sm,
+  },
+  scoreValue: {
+    ...typography.h1,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  scoreLabel: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginLeft: spacing.xs,
+  },
+  scoreBar: {
+    height: 8,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  scoreBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  riskContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  riskBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+    marginRight: spacing.md,
+  },
+  riskText: {
+    ...typography.caption,
+    color: colors.textWhite,
+    fontWeight: '600',
+  },
+  riskScore: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  portfolioFactorsContainer: {
+    marginTop: spacing.sm,
+  },
+  portfolioFactorItem: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  diversificationScore: {
+    ...typography.h5,
+    color: colors.primary,
+    marginBottom: spacing.md,
+  },
+  sectorItem: {
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  sectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  sectorName: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  recommendationBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+  },
+  recommendationText: {
+    ...typography.caption,
+    color: colors.textWhite,
+    fontWeight: '600',
+  },
+  sectorMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  sectorMetric: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  sectorReasoning: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  recommendationsBox: {
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginTop: spacing.md,
+  },
+  recommendationsTitle: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  recommendationItem: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  performanceScore: {
+    ...typography.h5,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  benchmarkText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  trendsContainer: {
+    marginTop: spacing.sm,
+  },
+  trendItem: {
+    ...typography.body,
+    color: colors.success,
+    marginBottom: spacing.xs,
+  },
+  portfolioRecommendationCard: {
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+  },
+  portfolioRecommendationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  portfolioRecommendationSymbol: {
+    ...typography.bodyMedium,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  portfolioRecommendationAction: {
+    ...typography.body,
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  portfolioRecommendationReasoning: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  portfolioRecommendationFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  portfolioRecommendationType: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  portfolioRecommendationImpact: {
+    ...typography.caption,
     color: colors.textSecondary,
   },
 });

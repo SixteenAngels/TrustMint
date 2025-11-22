@@ -10,15 +10,27 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { SFSymbol } from '../components/SFSymbols';
-import { colors } from '../styles/colors';
+import { useTheme } from '../contexts/ThemeContext';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useNavigationContext } from '../contexts/NavigationContext';
+import { KYCVerificationScreen } from './KYCVerificationScreen';
+import { HelpScreen } from './HelpScreen';
+import { ContactScreen } from './ContactScreen';
+import { TermsScreen } from './TermsScreen';
+import { PrivacyScreen } from './PrivacyScreen';
 
 export const ProfileScreen: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [showKYC, setShowKYC] = useState(false);
+  const [activeSupportScreen, setActiveSupportScreen] = useState<string | null>(null);
+  const { switchTab } = useNavigationContext();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -32,15 +44,26 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleKYC = () => {
-    Alert.alert('KYC Verification', 'KYC verification feature coming soon!');
+    setShowKYC(true);
   };
 
   const handleTransactionHistory = () => {
-    Alert.alert('Transaction History', 'Transaction history feature coming soon!');
+    switchTab('wallet');
   };
 
-  const handleSupport = () => {
-    Alert.alert('Support', 'Contact us at support@minttrade.gh');
+  const handleSupport = (type: string) => {
+    // Map support types to screen names
+    const screenMap: { [key: string]: string } = {
+      'help': 'help',
+      'contact': 'contact',
+      'terms': 'terms',
+      'privacy': 'privacy',
+    };
+    setActiveSupportScreen(screenMap[type] || null);
+  };
+
+  const closeSupportScreen = () => {
+    setActiveSupportScreen(null);
   };
 
   const renderProfileHeader = () => (
@@ -67,21 +90,21 @@ export const ProfileScreen: React.FC = () => {
       <View style={styles.quickAccessGrid}>
         <TouchableOpacity
           style={styles.quickAccessItem}
-          onPress={() => Alert.alert('Social Trading', 'Navigate to social trading')}
+          onPress={() => switchTab('social')}
         >
           <Text style={styles.quickAccessIcon}>👥</Text>
           <Text style={styles.quickAccessText}>Social</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickAccessItem}
-          onPress={() => Alert.alert('Learning', 'Navigate to learning center')}
+          onPress={() => switchTab('learning')}
         >
           <Text style={styles.quickAccessIcon}>📚</Text>
           <Text style={styles.quickAccessText}>Learn</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.quickAccessItem}
-          onPress={() => Alert.alert('Notifications', 'Manage notifications')}
+          onPress={() => switchTab('notifications')}
         >
           <Text style={styles.quickAccessIcon}>🔔</Text>
           <Text style={styles.quickAccessText}>Alerts</Text>
@@ -174,24 +197,46 @@ export const ProfileScreen: React.FC = () => {
     {
       icon: '❓',
       title: 'Help & Support',
-      onPress: handleSupport,
+      type: 'help',
+      onPress: () => handleSupport('help'),
     },
     {
       icon: '📧',
       title: 'Contact Us',
-      onPress: () => Alert.alert('Contact', 'Email: support@minttrade.gh'),
+      type: 'contact',
+      onPress: () => handleSupport('contact'),
     },
     {
       icon: '📋',
       title: 'Terms & Conditions',
-      onPress: () => Alert.alert('Terms', 'Terms and conditions'),
+      type: 'terms',
+      onPress: () => handleSupport('terms'),
     },
     {
       icon: '🔒',
       title: 'Privacy Policy',
-      onPress: () => Alert.alert('Privacy', 'Privacy policy'),
+      type: 'privacy',
+      onPress: () => handleSupport('privacy'),
     },
   ];
+
+  if (showKYC) {
+    return <KYCVerificationScreen onClose={() => setShowKYC(false)} />;
+  }
+
+  // Render support screens
+  if (activeSupportScreen === 'help') {
+    return <HelpScreen onClose={closeSupportScreen} />;
+  }
+  if (activeSupportScreen === 'contact') {
+    return <ContactScreen onClose={closeSupportScreen} />;
+  }
+  if (activeSupportScreen === 'terms') {
+    return <TermsScreen onClose={closeSupportScreen} />;
+  }
+  if (activeSupportScreen === 'privacy') {
+    return <PrivacyScreen onClose={closeSupportScreen} />;
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -218,19 +263,19 @@ export const ProfileScreen: React.FC = () => {
           icon: '👥',
           title: 'Social Trading',
           subtitle: 'Connect with other traders',
-          onPress: () => Alert.alert('Social Trading', 'Navigate to social trading'),
+          onPress: () => switchTab('social'),
         },
         {
           icon: '📚',
           title: 'Learning Center',
           subtitle: 'Educational content & courses',
-          onPress: () => Alert.alert('Learning', 'Navigate to learning center'),
+          onPress: () => switchTab('learning'),
         },
         {
           icon: '🔔',
           title: 'Notifications',
           subtitle: 'Price alerts & notifications',
-          onPress: () => Alert.alert('Notifications', 'Manage notifications'),
+          onPress: () => switchTab('notifications'),
         },
       ])}
 
@@ -247,11 +292,12 @@ export const ProfileScreen: React.FC = () => {
         <Text style={styles.footerText}>Made in Ghana 🇬🇭 with ❤️ by Mint Trade</Text>
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </View>
+
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

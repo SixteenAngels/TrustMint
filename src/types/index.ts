@@ -1,16 +1,29 @@
+// Re-export all types
+export * from './common';
+export * from './wallet';
+export * from './payments';
+export * from './savings';
+export * from './social';
+export * from './kyc';
+export * from './ai';
+
+// User type
 export interface User {
   uid: string;
+  id: string;
   name: string;
   phone: string;
   email?: string;
-  dateOfBirth?: string;
-  nationalId?: string;
+  avatar?: string;
   verified: boolean;
   balance: number;
-  createdAt: Date;
-  pin?: string;
+  createdAt: Date | string;
+  role?: 'user' | 'manager' | 'admin';
+  isAdmin?: boolean;
+  isManager?: boolean;
 }
 
+// Stock type
 export interface Stock {
   id: string;
   name: string;
@@ -18,68 +31,50 @@ export interface Stock {
   price: number;
   change: number;
   changePercent: number;
-  volume: number;
-  updatedAt: Date;
-  pe?: number;
-  dividend?: number;
+  volume?: number;
   marketCap?: number;
   high?: number;
-  lastUpdated?: Date;
+  low?: number;
+  open?: number;
+  previousClose?: number;
+  updatedAt?: Date | string;
 }
 
-export interface PortfolioItem {
-  stockId: string;
-  quantity: number;
-  avgPrice: number;
-  totalValue: number;
-  currentPrice: number;
-  profitLoss: number;
-  profitLossPercent: number;
-}
-
+// Transaction type
 export interface Transaction {
   id: string;
   userId: string;
-  stockId: string;
   type: 'buy' | 'sell';
+  stockId: string;
+  stockSymbol: string;
   quantity: number;
   price: number;
   total: number;
-  timestamp: Date;
+  fees: number;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  createdAt: Date | string;
+  completedAt?: Date | string;
 }
 
-export interface Notification {
-  id: string;
-  userId: string;
-  title: string;
-  body: string;
-  type: 'price_alert' | 'portfolio_update' | 'market_news';
-  data?: any;
-  read: boolean;
-  createdAt: Date;
-}
-
-export interface Lesson {
-  id: string;
-  title: string;
-  content: string;
-  order: number;
-  completed: boolean;
-  quiz?: {
-    questions: Array<{
-      question: string;
-      options: string[];
-      correctAnswer: number;
-    }>;
-  };
-}
-
-export interface PriceAlert {
-  id: string;
-  userId: string;
+// Portfolio item
+export interface PortfolioItem {
   stockId: string;
-  condition: 'above' | 'below';
-  targetPrice: number;
-  active: boolean;
-  createdAt: Date;
+  stockSymbol: string;
+  quantity: number;
+  averagePrice: number;
+  currentPrice: number;
+  totalValue: number;
+  profit: number;
+  profitPercent: number;
+}
+
+// Post type (for social features)
+export interface Post {
+  id: string;
+  userId: string;
+  content: string;
+  timestamp: string | Date;
+  likes: number;
+  comments: number;
+  shares: number;
 }

@@ -1,41 +1,100 @@
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import functions from '@react-native-firebase/functions';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
+import { functions } from '../core/firebase/functionsAdapter';
 import { Stock, Transaction, PortfolioItem } from '../types';
+import { getCurrencyForCountry, convertToUserCurrency, Currency } from './currencyService';
+import { fetchMarketData } from './marketDataService';
+import { CacheService } from './cacheService';
 
 const db = firestore();
+const CACHE_TTL = 30000; // 30 seconds cache for live data
 
 export class StockService {
-  private static instance: StockService;
+  private static instances: Record<string, StockService> = {};
   private stocks: Stock[] = [];
   private lastUpdate: Date | null = null;
+  private country: string;
 
-  static getInstance(): StockService {
-    if (!StockService.instance) {
-      StockService.instance = new StockService();
+  static getInstance(country: string = 'Ghana'): StockService {
+    if (!StockService.instances[country]) {
+      StockService.instances[country] = new StockService(country);
     }
-    return StockService.instance;
+    return StockService.instances[country];
   }
 
-  // Fetch live GSE data via Cloud Function
-  async fetchLiveData(): Promise<Stock[]> {
+  constructor(country: string) {
+    this.country = country;
+  }
+
+  // Fetch live stock data for selected country (with caching)
+  async fetchLiveData(forceRefresh: boolean = false): Promise<Stock[]> {
+    const cacheService = CacheService.getInstance();
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = cacheService.getCachedStockList(this.country);
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+    }
+
     try {
-      const fetchGSEData = functions().httpsCallable('fetchGSEData');
-      const result = await fetchGSEData();
-      const stocks = result.data as Stock[];
+      let stocks = await fetchMarketData(this.country);
       
-      // Update local cache
+      // fetchMarketData now always returns data (real or mock), so we don't need to throw
+      if (!stocks || stocks.length === 0) {
+        console.warn('[StockService] No stocks returned, using last known stocks');
+        return this.stocks.length > 0 ? this.stocks : [];
+      }
+
+      stocks = await this.convertPrices(stocks);
+
+      // Cache the results
+      cacheService.cacheStockList(this.country, stocks, CACHE_TTL);
+
       this.stocks = stocks;
       this.lastUpdate = new Date();
-      
-      // Update Firestore
-      await this.updateStocksInFirestore(stocks);
-      
+
+      // Update Firestore in background (don't wait for it)
+      this.updateStocksInFirestore(stocks).catch(err => {
+        console.error('Error updating stocks in Firestore:', err);
+      });
+
       return stocks;
     } catch (error) {
       console.error('Error fetching live data:', error);
-      // Fallback to cached data
-      return this.stocks;
+      
+      // Try to return cached data even if expired
+      const cached = cacheService.getCachedStockList(this.country);
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+
+      // Return last known stocks if available
+      if (this.stocks.length > 0) {
+        console.log('[StockService] Returning last known stocks as fallback');
+        return this.stocks;
+      }
+
+      // Last resort: return empty array (app should handle this gracefully)
+      console.warn('[StockService] No stocks available, returning empty array');
+      return [];
     }
+  }
+
+  // Convert stock prices to user's currency
+  async convertPrices(stocks: Stock[]): Promise<Stock[]> {
+    const userCurrency: Currency = getCurrencyForCountry(this.country);
+    return stocks.map(stock => {
+      // Assume stock.price is in local market currency
+      // Convert to userCurrency if needed
+      const marketCurrency: Currency = getCurrencyForCountry(this.country);
+      return {
+        ...stock,
+        price: convertToUserCurrency(stock.price, marketCurrency, userCurrency),
+        currency: userCurrency,
+      };
+    });
   }
 
   // Get stocks from Firestore
@@ -43,7 +102,7 @@ export class StockService {
     try {
       const stocksRef = db.collection('stocks');
       const snapshot = await stocksRef.get();
-      const stocks = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ ...doc.data(), id: doc.id } as Stock));
+      const stocks = snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as Stock));
       
       this.stocks = stocks;
       return stocks;
@@ -59,7 +118,7 @@ export class StockService {
       const stockRef = db.collection('stocks').doc(stockId);
       const stockDoc = await stockRef.get();
       
-      if (stockDoc.exists) {
+      if (stockDoc.exists()) {
         return { ...stockDoc.data(), id: stockDoc.id } as Stock;
       }
       return null;
@@ -80,12 +139,12 @@ export class StockService {
 
   // Update stocks in Firestore
   private async updateStocksInFirestore(stocks: Stock[]): Promise<void> {
-    const batch: Promise<void>[] = stocks.map((stock: Stock) => 
-      db.collection('stocks').doc(stock.id).set({
+    const batch = stocks.map(async (stock: Stock) => {
+      await db.collection('stocks').doc(stock.id).set({
         ...stock,
         updatedAt: new Date()
-      })
-    );
+      });
+    });
     await Promise.all(batch);
   }
 
@@ -94,7 +153,7 @@ export class StockService {
     try {
       const portfolioRef = db.collection('users').doc(userId).collection('portfolio');
       const snapshot = await portfolioRef.get();
-      const portfolio = snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => doc.data() as PortfolioItem);
+      const portfolio = snapshot.docs.map((doc: any) => doc.data() as PortfolioItem);
       
       // Calculate current values
       const updatedPortfolio = await Promise.all(
@@ -157,7 +216,7 @@ export class StockService {
       const q = transactionsRef.orderBy('timestamp', 'desc');
       const snapshot = await q.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ ...doc.data(), id: doc.id } as Transaction));
+      return snapshot.docs.map((doc: any) => ({ ...doc.data(), id: doc.id } as Transaction));
     } catch (error) {
       console.error('Error getting transactions:', error);
       return [];

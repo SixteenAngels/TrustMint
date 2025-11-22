@@ -12,16 +12,19 @@ import {
 } from 'react-native';
 import { useWallet } from '../contexts/WalletContext';
 import { WalletService } from '../services/walletService';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SendMoneyScreenProps {
   onClose: () => void;
 }
 
 export const SendMoneyScreen: React.FC<SendMoneyScreenProps> = ({ onClose }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const { wallet, refreshWallet } = useWallet();
   const [recipientPhone, setRecipientPhone] = useState('');
   const [amount, setAmount] = useState('');
@@ -237,7 +240,7 @@ export const SendMoneyScreen: React.FC<SendMoneyScreenProps> = ({ onClose }) => 
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

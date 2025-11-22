@@ -10,7 +10,8 @@ import {
   SAVINGS_PERCENTAGES,
   FIXED_SAVINGS_AMOUNTS
 } from '../types/savings';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
 
 const db = firestore();
 
@@ -31,8 +32,8 @@ export class AutoSaveService {
         ...ruleData,
         totalSaved: 0,
         transactionCount: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return ruleRef.id;
@@ -53,7 +54,7 @@ export class AutoSaveService {
 
       const snapshot = await rulesQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -74,7 +75,7 @@ export class AutoSaveService {
     try {
       await db.collection('autoSaveRules').doc(ruleId).update({
         ...updates,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating auto-save rule:', error);
@@ -87,7 +88,7 @@ export class AutoSaveService {
     try {
       await db.collection('autoSaveRules').doc(ruleId).update({
         isActive: false,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error deleting auto-save rule:', error);
@@ -173,14 +174,14 @@ export class AutoSaveService {
 
       const roundUpRef = await db.collection('roundUpTransactions').add({
         ...roundUpData,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Update auto-save rule stats
       await db.collection('autoSaveRules').doc(rule.id).update({
-        totalSaved: firestore.FieldValue.increment(roundUpAmount),
-        transactionCount: firestore.FieldValue.increment(1),
-        lastTriggered: firestore.FieldValue.serverTimestamp(),
+        totalSaved: (firestore as any).FieldValue.increment(roundUpAmount),
+        transactionCount: (firestore as any).FieldValue.increment(1),
+        lastTriggered: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return {
@@ -215,7 +216,7 @@ export class AutoSaveService {
       // Update status to completed
       await db.collection('roundUpTransactions').doc(roundUpId).update({
         status: 'completed',
-        completedAt: firestore.FieldValue.serverTimestamp(),
+        completedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       // Mark as failed
@@ -259,9 +260,9 @@ export class AutoSaveService {
   private async addToSavingsAccount(accountId: string, amount: number): Promise<void> {
     try {
       await db.collection('savingsAccounts').doc(accountId).update({
-        balance: firestore.FieldValue.increment(amount),
-        totalDeposits: firestore.FieldValue.increment(amount),
-        lastActivity: firestore.FieldValue.serverTimestamp(),
+        balance: (firestore as any).FieldValue.increment(amount),
+        totalDeposits: (firestore as any).FieldValue.increment(amount),
+        lastActivity: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error adding to savings account:', error);
@@ -299,7 +300,7 @@ export class AutoSaveService {
         totalDeposits: 0,
         totalWithdrawals: 0,
         totalInterest: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return accountRef.id;
@@ -319,7 +320,7 @@ export class AutoSaveService {
 
       const snapshot = await accountsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -341,8 +342,8 @@ export class AutoSaveService {
         ...goalData,
         progress: 0,
         isCompleted: false,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return goalRef.id;
@@ -363,7 +364,7 @@ export class AutoSaveService {
 
       const snapshot = await goalsQuery.get();
       
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -385,7 +386,7 @@ export class AutoSaveService {
     try {
       const contributionRef = await db.collection('goalContributions').add({
         ...contributionData,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       // Update goal progress
@@ -415,8 +416,8 @@ export class AutoSaveService {
         currentAmount: newCurrentAmount,
         progress,
         isCompleted,
-        completedAt: isCompleted ? firestore.FieldValue.serverTimestamp() : null,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        completedAt: isCompleted ? (firestore as any).FieldValue.serverTimestamp() : null,
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating goal progress:', error);
@@ -441,7 +442,7 @@ export class AutoSaveService {
       const roundUpTransactions = roundUpSnapshot.docs.map(doc => doc.data() as RoundUpTransaction);
 
       // Calculate analytics
-      const totalSaved = roundUpTransactions.reduce((sum, t) => sum + t.roundUpAmount, 0);
+      const totalSaved = roundUpTransactions.reduce((sum: number, t: any) => sum + t.roundUpAmount, 0);
       const averageRoundUp = totalSaved / roundUpTransactions.length || 0;
 
       // Get goals
@@ -584,7 +585,7 @@ export class AutoSaveService {
         .where('status', '==', 'completed');
 
       const snapshot = await dailyQuery.get();
-      return snapshot.docs.reduce((sum, doc) => sum + doc.data().roundUpAmount, 0);
+      return snapshot.docs.reduce((sum: number, doc: any) => sum + doc.data().roundUpAmount, 0);
     } catch (error) {
       console.error('Error getting daily saved amount:', error);
       return 0;

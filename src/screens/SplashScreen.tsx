@@ -5,10 +5,11 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SplashScreenProps {
   onAnimationComplete: () => void;
@@ -17,6 +18,9 @@ interface SplashScreenProps {
 const { width, height } = Dimensions.get('window');
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -68,7 +72,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete 
         ]}
       >
         <View style={styles.logo}>
-          <Text style={styles.logoText}>💹</Text>
+          <Image
+            source={require('../../assets/icon.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
         <Text style={styles.appName}>Mint Trade</Text>
       </Animated.View>
@@ -106,7 +114,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete 
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -130,10 +138,11 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
+    padding: 0.5,
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
@@ -143,8 +152,9 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 16,
   },
-  logoText: {
-    fontSize: 48,
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   appName: {
     ...typography.h1,

@@ -12,14 +12,17 @@ import {
 } from 'react-native';
 import { InvestmentVaultService } from '../services/investmentVaultService';
 import { InvestmentVault, UserVaultInvestment, VAULT_CATEGORIES } from '../types/savings';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export const InvestmentVaultsScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'explore' | 'my_vaults' | 'performance'>('explore');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [vaults, setVaults] = useState<InvestmentVault[]>([]);
@@ -512,7 +515,7 @@ export const InvestmentVaultsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

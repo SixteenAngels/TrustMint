@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface WelcomeSlidesScreenProps {
   onComplete: () => void;
@@ -18,14 +18,19 @@ interface WelcomeSlidesScreenProps {
 
 const { width } = Dimensions.get('window');
 
-const slides = [
-  {
-    id: 1,
-    title: 'Buy & Sell Ghana Stocks Seamlessly',
-    description: 'Trade stocks from MTN, GCB Bank, GOIL, and other leading Ghanaian companies with just a few taps.',
-    icon: '📈',
-    color: colors.primary,
-  },
+export const WelcomeSlidesScreen: React.FC<WelcomeSlidesScreenProps> = ({ onComplete }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
+
+  const slides = [
+    {
+      id: 1,
+      title: 'Buy & Sell Ghana Stocks Seamlessly',
+      description: 'Trade stocks from MTN, GCB Bank, GOIL, and other leading Ghanaian companies with just a few taps.',
+      icon: '📈',
+      color: colors.primary,
+    },
   {
     id: 2,
     title: 'Track Live Market Updates Instantly',
@@ -41,8 +46,6 @@ const slides = [
     color: colors.success,
   },
 ];
-
-export const WelcomeSlidesScreen: React.FC<WelcomeSlidesScreenProps> = ({ onComplete }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -171,7 +174,7 @@ export const WelcomeSlidesScreen: React.FC<WelcomeSlidesScreenProps> = ({ onComp
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

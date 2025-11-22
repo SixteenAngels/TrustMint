@@ -12,12 +12,15 @@ import {
 import { BillPaymentService } from '../services/billPaymentService';
 import { BillProvider, BillAccount, BillPayment, BillCategory } from '../types/payments';
 import { useAuth } from '../contexts/AuthContext';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const BillPaymentScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'pay' | 'accounts' | 'history'>('pay');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -483,7 +486,7 @@ export const BillPaymentScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

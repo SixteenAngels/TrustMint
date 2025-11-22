@@ -1,10 +1,13 @@
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
 import { Stock, User } from '../types';
+
+const db = firestore();
 
 export class AdminService {
   private static instance: AdminService;
-  private stocksCollection = firestore().collection('stocks');
-  private usersCollection = firestore().collection('users');
+  private stocksCollection = db.collection('stocks');
+  private usersCollection = db.collection('users');
 
   private constructor() {}
 
@@ -17,12 +20,12 @@ export class AdminService {
 
   public async getStocks(): Promise<Stock[]> {
     const snapshot = await this.stocksCollection.get();
-    return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() })) as Stock[];
+    return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as Stock[];
   }
 
   public async getUsers(): Promise<User[]> {
     const snapshot = await this.usersCollection.get();
-    return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() })) as User[];
+    return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as User[];
   }
 
   public async addStock(symbol: string): Promise<void> {
@@ -33,7 +36,7 @@ export class AdminService {
       change: 0,
       changePercent: 0,
       volume: 0,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: (firestore as any).FieldValue.serverTimestamp(),
     });
   }
 
@@ -51,7 +54,7 @@ export class AdminService {
       price: newPrice,
       change,
       changePercent,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      updatedAt: (firestore as any).FieldValue.serverTimestamp(),
     });
   }
 }

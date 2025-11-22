@@ -1039,7 +1039,6 @@ export const syncPrices = functions.pubsub
 
 **Supported Providers**:
 - [ ] Flutterwave (Ghana)
-- [ ] Paystack
 - [ ] Stripe
 - [ ] Momo Payment (Ghana)
 

@@ -13,6 +13,7 @@ export const colors: {
   textLight: string;
   textWhite: string;
   border: string;
+  shadow: string;
 } = {
   primary: '#007AFF',
   primaryLight: '#E5F1FF',
@@ -28,4 +29,5 @@ export const colors: {
   textLight: '#8A8A8E',
   textWhite: '#FFFFFF',
   border: '#C6C6C8',
+  shadow: '#000000',
 };

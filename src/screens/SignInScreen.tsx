@@ -7,13 +7,16 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { AuthService } from '../services/authService';
-import { colors } from '../styles/colors';
+import { AuthService } from '../../TrustMint/src/services/authService';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SignInScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,7 +75,7 @@ const SignInScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

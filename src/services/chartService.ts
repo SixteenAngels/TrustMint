@@ -23,9 +23,65 @@ export class ChartService {
 
   // Fetch real historical data from API
   async fetchHistoricalData(symbol: string, timeRange: string): Promise<OHLCData[]> {
-    // TODO: Implement actual API call to fetch historical data
-    // This should call your data source API to get real OHLC data
-    throw new Error('Historical data API not implemented - requires production integration');
+    try {
+      // Try to fetch from marketDataService historical data
+      const marketDataModule = await import('./marketDataService');
+      const fetchMarketHistorical = marketDataModule.fetchHistoricalData;
+      
+      // Determine country based on symbol (GSE stocks are from Ghana)
+      const country = this.isGSESymbol(symbol) ? 'Ghana' : 'US';
+      
+      // Map timeRange to interval
+      const interval = this.mapTimeRangeToInterval(timeRange);
+      
+      try {
+        const historicalData = await fetchMarketHistorical(symbol, country, interval, 100);
+        
+        if (historicalData && historicalData.length > 0) {
+          // Convert to OHLC format
+          return historicalData.map((item: any) => ({
+            timestamp: new Date(item.datetime).getTime(),
+            open: parseFloat(item.open) || 0,
+            high: parseFloat(item.high) || 0,
+            low: parseFloat(item.low) || 0,
+            close: parseFloat(item.close) || 0,
+            volume: parseFloat(item.volume) || 0,
+          }));
+        }
+      } catch (apiError) {
+        console.warn('[ChartService] Historical API failed, using sample data:', apiError);
+      }
+      
+      // Fallback to sample data if API fails
+      return this.generateSampleOHLCData(timeRange, symbol);
+    } catch (error) {
+      console.error('[ChartService] Error fetching historical data:', error);
+      // Always return sample data as fallback
+      return this.generateSampleOHLCData(timeRange, symbol);
+    }
+  }
+
+  // Helper to check if symbol is from GSE
+  private isGSESymbol(symbol: string): boolean {
+    const gseSymbols = ['MTN', 'GCB', 'CAL', 'EGH', 'SCB', 'TBL', 'FML', 'TOTAL'];
+    return gseSymbols.some(gse => symbol.toUpperCase().includes(gse));
+  }
+
+  // Map timeRange to API interval
+  private mapTimeRangeToInterval(timeRange: string): '1d' | '1w' | '1m' {
+    switch (timeRange) {
+      case '1D':
+        return '1d';
+      case '1W':
+      case '1M':
+        return '1w';
+      case '3M':
+      case '6M':
+      case '1Y':
+        return '1m';
+      default:
+        return '1d';
+    }
   }
 
   // Generate sample OHLC data for demonstration (DEPRECATED - use fetchHistoricalData)

@@ -23,7 +23,7 @@ export const LearningScreen: React.FC = () => {
     try {
       const lessonsRef = collection(db, 'lessons');
       const snapshot = await getDocs(lessonsRef);
-      const lessonsData = snapshot.docs.map(doc => ({
+      const lessonsData = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
       })) as Lesson[];

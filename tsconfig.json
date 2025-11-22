@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
@@ -10,15 +9,14 @@
       ]
     },
     "esModuleInterop": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "src/types/declarations.d.ts"
+    "src/types/declarations.d.ts",
+    "src/types/firebase-native-mock.d.ts"
   ]
-=======
-  "compilerOptions": {},
-  "extends": "expo/tsconfig.base"
->>>>>>> 5ebe4ce (Initial commit: Add app documentation, update dependencies, and proper .gitignore)
 }

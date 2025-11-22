@@ -1,5 +1,6 @@
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import functions from '@react-native-firebase/functions';
+// Use compatibility layer for Expo (web SDK)
+import { firestore } from '../core/firebase/firestoreAdapter';
+import { functions } from '../core/firebase/functionsAdapter';
 import { Wallet, WalletTransaction, VirtualAccount, WalletSettings, P2PTransfer, BillPayment, AutoSaveRule } from '../types/wallet';
 
 const db = firestore();
@@ -36,18 +37,24 @@ export class WalletService {
       const walletRef = db.collection('wallets').doc(userId);
       const walletDoc = await walletRef.get();
       
-      if (walletDoc.exists) {
+      if (walletDoc.exists()) {
         const data = walletDoc.data();
+        if (!data) return null;
         return {
           ...data,
           id: walletDoc.id,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-          lastTransactionAt: data.lastTransactionAt?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
+          lastTransactionAt: (data.lastTransactionAt as any)?.toDate?.(),
         } as Wallet;
       }
       return null;
-    } catch (error) {
+    } catch (error: any) {
+      // Handle offline errors gracefully
+      if (error?.code === 'unavailable' || error?.message?.includes('offline') || error?.message?.includes('Failed to get document')) {
+        console.warn('Wallet service offline, returning null (will use cached data if available)');
+        return null;
+      }
       console.error('Error getting wallet:', error);
       return null;
     }
@@ -73,7 +80,7 @@ export class WalletService {
       await walletRef.update({
         balance: newBalance,
         totalBalance: newBalance + (walletDoc.data()?.lockedBalance || 0),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Error updating balance:', error);
@@ -86,7 +93,7 @@ export class WalletService {
     try {
       const transactionRef = await db.collection('walletTransactions').add({
         ...transaction,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       const newTransaction: WalletTransaction = {
@@ -118,7 +125,7 @@ export class WalletService {
         .orderBy('createdAt', 'desc');
       const snapshot = await q.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot): WalletTransaction => {
+      return snapshot.docs.map((doc: any): WalletTransaction => {
         const data = doc.data();
         return {
           ...data,
@@ -139,13 +146,14 @@ export class WalletService {
       const transactionRef = db.collection('walletTransactions').doc(transactionId);
       const transactionDoc = await transactionRef.get();
       
-      if (transactionDoc.exists) {
+      if (transactionDoc.exists()) {
         const data = transactionDoc.data();
+        if (!data) return null;
         return {
           ...data,
           id: transactionDoc.id,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          completedAt: data.completedAt?.toDate(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          completedAt: (data.completedAt as any)?.toDate?.(),
         } as WalletTransaction;
       }
       return null;
@@ -214,12 +222,13 @@ export class WalletService {
       const settingsRef = db.collection('walletSettings').doc(userId);
       const settingsDoc = await settingsRef.get();
       
-      if (settingsDoc.exists) {
+      if (settingsDoc.exists()) {
         const data = settingsDoc.data();
+        if (!data) return null;
         return {
           ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          createdAt: (data.createdAt as any)?.toDate?.() || data.createdAt || new Date(),
+          updatedAt: (data.updatedAt as any)?.toDate?.() || data.updatedAt || new Date(),
         } as WalletSettings;
       }
       return null;
@@ -236,7 +245,7 @@ export class WalletService {
       await settingsRef.set({
         ...settings,
         userId,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       }, { merge: true });
     } catch (error) {
       console.error('Error updating wallet settings:', error);
@@ -251,8 +260,8 @@ export class WalletService {
         ...rule,
         userId,
         totalSaved: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: (firestore as any).FieldValue.serverTimestamp(),
+        updatedAt: (firestore as any).FieldValue.serverTimestamp(),
       });
 
       return {
@@ -278,7 +287,7 @@ export class WalletService {
         .orderBy('createdAt', 'desc');
       const snapshot = await q.get();
       
-      return snapshot.docs.map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot): AutoSaveRule => {
+      return snapshot.docs.map((doc: any): AutoSaveRule => {
         const data = doc.data();
         return {
           ...data,

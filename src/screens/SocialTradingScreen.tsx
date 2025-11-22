@@ -12,13 +12,16 @@ import {
 } from 'react-native';
 import { SocialService } from '../services/socialService';
 import { UserProfile, TradeAlert, SocialFeed } from '../types/social';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
 import { mockPosts } from '../data/mockPosts';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const SocialTradingScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'leaders' | 'messages'>('feed');
   const [socialFeed, setSocialFeed] = useState<SocialFeed[]>([]);
   const [discoverUsers, setDiscoverUsers] = useState<UserProfile[]>([]);
@@ -355,7 +358,7 @@ export const SocialTradingScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

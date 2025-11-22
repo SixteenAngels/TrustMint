@@ -10,7 +10,7 @@ import {
   Modal,
   Image,
 } from 'react-native';
-import { KYCService } from '../services/kycService';
+import { KYCService } from '../../TrustMint/src/services/kycService';
 import { 
   KYCProfile, 
   KYCStep, 
@@ -20,13 +20,20 @@ import {
   KYC_STEPS,
   DOCUMENT_TYPES,
   KYC_STATUS_COLORS
-} from '../types/kyc';
-import { colors } from '../styles/colors';
+} from '../../TrustMint/src/types/kyc';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
-export const KYCVerificationScreen: React.FC = () => {
+interface KYCVerificationScreenProps {
+  onClose?: () => void;
+}
+
+export const KYCVerificationScreen: React.FC<KYCVerificationScreenProps> = ({ onClose }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'steps' | 'documents' | 'status'>('steps');
   const [kycProfile, setKycProfile] = useState<KYCProfile | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -505,10 +512,10 @@ export const KYCVerificationScreen: React.FC = () => {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity 
-            style={styles.closeButton} 
+            style={styles.backButton} 
             onPress={() => setShowDocumentModal(false)}
           >
-            <Text style={styles.closeButtonText}>✕</Text>
+            <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Upload Document</Text>
           <View style={styles.placeholder} />
@@ -571,8 +578,15 @@ export const KYCVerificationScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>KYC Verification</Text>
-        <Text style={styles.subtitle}>Complete your identity verification</Text>
+        <View>
+          <Text style={styles.title}>KYC Verification</Text>
+          <Text style={styles.subtitle}>Complete your identity verification</Text>
+        </View>
+        {onClose && (
+          <TouchableOpacity style={styles.backButton} onPress={onClose}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tab Selector */}
@@ -589,7 +603,7 @@ export const KYCVerificationScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -609,6 +623,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
     backgroundColor: colors.backgroundSecondary,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     ...typography.h2,
@@ -618,6 +635,18 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  closeButton: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 12,
+    ...shadows.button,
+  },
+  closeButtonText: {
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -927,6 +956,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
   closeButton: {
     width: 32,

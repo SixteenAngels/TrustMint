@@ -13,16 +13,19 @@ import {
 import { PaymentService, PaymentMethod } from '../services/paymentService';
 import { useWallet } from '../contexts/WalletContext';
 import { useAuth } from '../contexts/AuthContext';
-import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface AddMoneyScreenProps {
   onClose: () => void;
 }
 
 export const AddMoneyScreen: React.FC<AddMoneyScreenProps> = ({ onClose }) => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const { wallet, refreshWallet } = useWallet();
   const { user } = useAuth();
   const [amount, setAmount] = useState('');
@@ -264,7 +267,7 @@ export const AddMoneyScreen: React.FC<AddMoneyScreenProps> = ({ onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

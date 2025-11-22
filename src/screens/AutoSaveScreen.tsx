@@ -10,8 +10,8 @@ import {
   Modal,
   Switch,
 } from 'react-native';
-import { AutoSaveService } from '../services/autoSaveService';
-import { InvestmentVaultService } from '../services/investmentVaultService';
+import { AutoSaveService } from '../../TrustMint/src/services/autoSaveService';
+import { InvestmentVaultService } from '../../TrustMint/src/services/investmentVaultService';
 import { 
   AutoSaveRule, 
   SavingsAccount, 
@@ -22,13 +22,16 @@ import {
   SAVINGS_PERCENTAGES,
   FIXED_SAVINGS_AMOUNTS,
   SAVINGS_GOAL_CATEGORIES
-} from '../types/savings';
-import { colors } from '../styles/colors';
+} from '../../TrustMint/src/types/savings';
 import { typography } from '../styles/typography';
 import { spacing } from '../styles/spacing';
 import { shadows } from '../styles/shadows';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const AutoSaveScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = theme.colors;
+  const styles = createStyles(colors);
   const [activeTab, setActiveTab] = useState<'rules' | 'goals' | 'analytics'>('rules');
   const [rules, setRules] = useState<AutoSaveRule[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -695,7 +698,7 @@ export const AutoSaveScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

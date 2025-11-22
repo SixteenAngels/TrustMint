@@ -1,11 +1,9 @@
-<<<<<<< HEAD
-node_modules
-.expo/
-=======
 node_modules/
 .expo/
 *.log
 *.lock
 .DS_Store
 .env
->>>>>>> 5ebe4ce (Initial commit: Add app documentation, update dependencies, and proper .gitignore)
+.env.local
+NEONDB_CONNECTION.md
+QUICK_NEONDB_SETUP.md

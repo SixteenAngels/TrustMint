@@ -27,7 +27,7 @@ export const NotificationsScreen: React.FC = () => {
       const q = query(notificationsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
       
-      const notificationsData = snapshot.docs.map(doc => ({
+      const notificationsData = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
       })) as Notification[];

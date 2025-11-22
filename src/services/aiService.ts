@@ -1,8 +1,8 @@
-import { 
-  AIInsight, 
-  AIPrediction, 
-  AIPortfolioAnalysis, 
-  AINewsAnalysis, 
+import {
+  AIInsight,
+  AIPrediction,
+  AIPortfolioAnalysis,
+  AINewsAnalysis,
   AISentimentAnalysis,
   AIRecommendation,
   DataPoint,
@@ -16,6 +16,12 @@ import { Stock } from '../types';
 import { ChartService } from './chartService';
 import { SocialService } from './socialService';
 
+const OPENAI_API_KEY =
+  process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
+  process.env.OPENAI_API_KEY ||
+  '';
+const OPENAI_MODEL = 'gpt-4o-mini';
+
 export class AIService {
   private static instance: AIService;
   private config: AIConfig;
@@ -25,6 +31,66 @@ export class AIService {
       AIService.instance = new AIService();
     }
     return AIService.instance;
+  }
+
+  private async callOpenAI(prompt: string, opts?: { model?: string; maxTokens?: number }): Promise<string | null> {
+    if (!OPENAI_API_KEY) {
+      return null;
+    }
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: opts?.model || OPENAI_MODEL,
+          temperature: 0.4,
+          max_tokens: opts?.maxTokens ?? 400,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are Mint Trade AI, a Ghana-focused investment analyst. Be concise, professional, and mention risk levels.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('OpenAI response error:', errorBody);
+        return null;
+      }
+
+      const json = await response.json();
+      return json.choices?.[0]?.message?.content?.trim() ?? null;
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return null;
+    }
+  }
+
+  private buildInsightPrompt(symbol: string, stock: Stock, heuristics: AIInsight[]): string {
+    return [
+      `Provide a 3-4 bullet investment summary for ${symbol}.`,
+      `Current price: ${stock.price.toFixed(2)}.`,
+      `24h change: ${(stock.changePercent ?? 0).toFixed(2)}%.`,
+      'Use the analysis below as context:',
+      JSON.stringify(
+        heuristics.map((insight) => ({
+          title: insight.title,
+          reasoning: insight.reasoning,
+          confidence: insight.confidence,
+        })),
+      ),
+      'Mention risk level and suggested action.',
+    ].join('\n');
   }
 
   constructor() {
@@ -71,7 +137,35 @@ export class AIService {
       const newsInsight = await this.generateNewsInsight(symbol, stock);
       if (newsInsight) insights.push(newsInsight);
 
-      return insights.filter(insight => insight.confidence >= this.config.thresholds.confidence);
+      const filteredInsights = insights.filter(insight => insight.confidence >= this.config.thresholds.confidence);
+
+      if (filteredInsights.length && OPENAI_API_KEY) {
+        const llmSummary = await this.callOpenAI(
+          this.buildInsightPrompt(symbol, stock, filteredInsights),
+          { model: this.config.models.insights, maxTokens: 300 },
+        );
+
+        if (llmSummary) {
+          filteredInsights.push({
+            id: `ai_llm_${symbol}_${Date.now()}`,
+            type: 'analysis',
+            symbol,
+            title: 'AI Analyst Summary',
+            description: llmSummary,
+            confidence: 80,
+            reasoning: ['LLM-generated contextual summary'],
+            dataPoints: [],
+            timeframe: 'short',
+            riskLevel: 'medium',
+            createdAt: new Date(),
+            isActive: true,
+            tags: ['ai', 'summary'],
+            source: 'news',
+          });
+        }
+      }
+
+      return filteredInsights;
     } catch (error) {
       console.error('Error generating stock insights:', error);
       return [];
@@ -610,102 +704,223 @@ export class AIService {
   // Generate Portfolio Analysis
   async generatePortfolioAnalysis(userId: string): Promise<AIPortfolioAnalysis | null> {
     try {
-      // TODO: Implement real portfolio analysis using actual user portfolio data
-      const overallScore = Math.random() * 20 + 70; // Placeholder - should analyze real portfolio
-      
-      const riskAssessment = {
-        level: overallScore > 80 ? 'low' : overallScore > 60 ? 'medium' : 'high' as 'low' | 'medium' | 'high',
-        score: overallScore,
-        factors: [
-          'Well-diversified portfolio',
-          'Appropriate risk allocation',
-          'Strong performance history',
-        ],
-      };
+      // Get real portfolio data
+      const { StockService } = await import('./stockService');
+      const stockService = StockService.getInstance();
+      const portfolio = await stockService.getPortfolio(userId);
+      const allStocks = await stockService.getStocks();
 
-      const diversification = {
-        score: Math.random() * 20 + 75, // 75-95
-        sectors: [
-          {
-            sector: 'Banking',
-            allocation: 35,
-            performance: 12.5,
-            recommendation: 'overweight' as const,
-            reasoning: 'Strong fundamentals and growth potential',
+      if (portfolio.length === 0) {
+        // Return a basic analysis for empty portfolio
+        return {
+          userId,
+          overallScore: 50,
+          riskAssessment: {
+            level: 'low',
+            score: 50,
+            factors: ['No holdings yet - start building your portfolio'],
           },
-          {
-            sector: 'Telecommunications',
-            allocation: 25,
-            performance: 8.2,
-            recommendation: 'neutral' as const,
-            reasoning: 'Stable but limited growth',
+          diversification: {
+            score: 0,
+            sectors: [],
+            recommendations: ['Start by adding stocks from different sectors'],
           },
-          {
-            sector: 'Manufacturing',
-            allocation: 20,
-            performance: 15.8,
-            recommendation: 'overweight' as const,
-            reasoning: 'High growth potential',
+          performance: {
+            score: 50,
+            vsBenchmark: 0,
+            trends: ['No performance data available'],
           },
-          {
-            sector: 'Oil & Gas',
-            allocation: 20,
-            performance: -2.1,
-            recommendation: 'underweight' as const,
-            reasoning: 'Volatile and declining sector',
-          },
-        ] as SectorAnalysis[],
-        recommendations: [
-          'Increase allocation to Banking sector',
-          'Reduce exposure to Oil & Gas',
-          'Consider adding Technology stocks',
-        ],
-      };
+          recommendations: [],
+          createdAt: new Date(),
+        };
+      }
 
-      const performance = {
-        score: Math.random() * 15 + 80, // 80-95
-        vsBenchmark: Math.random() * 10 + 5, // 5-15% above benchmark
-        trends: [
-          'Consistent outperformance',
-          'Low volatility',
-          'Strong risk-adjusted returns',
-        ],
-      };
+      // Calculate real portfolio metrics
+      const totalValue = portfolio.reduce((sum, item) => sum + item.totalValue, 0);
+      const totalGain = portfolio.reduce((sum, item) => sum + item.profitLoss, 0);
+      const totalGainPercent = totalValue > 0 ? (totalGain / (totalValue - totalGain)) * 100 : 0;
 
-      const recommendations: PortfolioRecommendation[] = [
-        {
-          type: 'buy',
-          symbol: 'MTN',
-          action: 'Add 100 shares',
-          reasoning: 'Strong technical and fundamental signals',
-          priority: 'high',
-          impact: 8.5,
-        },
-        {
-          type: 'sell',
-          symbol: 'GOIL',
-          action: 'Reduce position by 50%',
-          reasoning: 'Weak sector outlook and poor performance',
-          priority: 'medium',
-          impact: 6.2,
-        },
-        {
-          type: 'rebalance',
-          symbol: 'PORTFOLIO',
-          action: 'Rebalance sector allocation',
-          reasoning: 'Current allocation is overweight in volatile sectors',
-          priority: 'high',
-          impact: 7.8,
-        },
-      ];
+      // Analyze sectors
+      const sectorMap: Record<string, { allocation: number; performance: number; items: PortfolioItem[] }> = {};
+      portfolio.forEach((item) => {
+        const stock = allStocks.find(s => s.id === item.stockId);
+        const sector = stock?.sector || 'Other';
+        if (!sectorMap[sector]) {
+          sectorMap[sector] = { allocation: 0, performance: 0, items: [] };
+        }
+        sectorMap[sector].allocation += item.totalValue;
+        sectorMap[sector].performance += item.profitLossPercent;
+        sectorMap[sector].items.push(item);
+      });
+
+      // Calculate sector allocations and performance
+      const sectors: SectorAnalysis[] = Object.entries(sectorMap).map(([sector, data]) => {
+        const allocation = (data.allocation / totalValue) * 100;
+        const avgPerformance = data.items.length > 0 ? data.performance / data.items.length : 0;
+        let recommendation: 'overweight' | 'underweight' | 'neutral' = 'neutral';
+        let reasoning = 'Balanced allocation';
+        
+        if (allocation > 40) {
+          recommendation = 'overweight';
+          reasoning = 'High concentration - consider diversifying';
+        } else if (allocation < 10 && avgPerformance > 0) {
+          recommendation = 'overweight';
+          reasoning = 'Strong performer with low allocation - consider increasing';
+        } else if (allocation > 30 && avgPerformance < -5) {
+          recommendation = 'underweight';
+          reasoning = 'Underperforming sector - consider reducing exposure';
+        }
+
+        return {
+          sector,
+          allocation: Math.round(allocation * 10) / 10,
+          performance: Math.round(avgPerformance * 10) / 10,
+          recommendation,
+          reasoning,
+        };
+      });
+
+      // Calculate diversification score (higher is better, max 100)
+      const numSectors = sectors.length;
+      const maxAllocation = Math.max(...sectors.map(s => s.allocation));
+      const diversificationScore = Math.min(100, (numSectors * 15) + (maxAllocation < 50 ? 20 : 0));
+
+      // Calculate risk score (lower is better)
+      const riskScore = maxAllocation > 50 ? 30 : maxAllocation > 40 ? 50 : 70;
+      const riskLevel: 'low' | 'medium' | 'high' = riskScore > 60 ? 'low' : riskScore > 40 ? 'medium' : 'high';
+
+      // Calculate performance score
+      const performanceScore = totalGainPercent > 10 ? 90 : totalGainPercent > 5 ? 80 : totalGainPercent > 0 ? 70 : 60;
+      const overallScore = (diversificationScore * 0.3) + (riskScore * 0.3) + (performanceScore * 0.4);
+
+      // Generate AI recommendations using OpenAI
+      let aiRecommendations: PortfolioRecommendation[] = [];
+      if (OPENAI_API_KEY && portfolio.length > 0) {
+        const portfolioSummary = portfolio.map(item => {
+          const stock = allStocks.find(s => s.id === item.stockId);
+          return `${stock?.symbol || 'UNK'}: ${item.quantity} shares @ ₵${item.avgPrice.toFixed(2)} (Current: ₵${item.currentPrice.toFixed(2)}, P/L: ${item.profitLossPercent.toFixed(2)}%)`;
+        }).join('\n');
+
+        const sectorSummary = sectors.map(s => `${s.sector}: ${s.allocation.toFixed(1)}% allocation, ${s.performance.toFixed(1)}% performance`).join('\n');
+
+        const aiPrompt = `Analyze this Ghana stock portfolio and provide 3-4 actionable recommendations:
+Portfolio Holdings:
+${portfolioSummary}
+
+Sector Breakdown:
+${sectorSummary}
+
+Total Value: ₵${totalValue.toFixed(2)}
+Total Gain/Loss: ₵${totalGain.toFixed(2)} (${totalGainPercent.toFixed(2)}%)
+
+Provide recommendations in JSON format:
+[
+  {
+    "type": "buy" | "sell" | "rebalance",
+    "symbol": "STOCK_SYMBOL",
+    "action": "specific action",
+    "reasoning": "brief reasoning",
+    "priority": "high" | "medium" | "low",
+    "impact": 0-10
+  }
+]`;
+
+        const aiResponse = await this.callOpenAI(aiPrompt, { maxTokens: 500 });
+        if (aiResponse) {
+          try {
+            // Try to parse JSON from AI response
+            const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              aiRecommendations = parsed.slice(0, 4).map((rec: any) => ({
+                type: rec.type || 'rebalance',
+                symbol: rec.symbol || 'PORTFOLIO',
+                action: rec.action || 'Review allocation',
+                reasoning: rec.reasoning || 'AI recommendation',
+                priority: rec.priority || 'medium',
+                impact: Math.min(10, Math.max(0, rec.impact || 5)),
+              }));
+            }
+          } catch (e) {
+            console.warn('Failed to parse AI recommendations:', e);
+          }
+        }
+      }
+
+      // Fallback recommendations if AI didn't provide any
+      if (aiRecommendations.length === 0) {
+        // Find best and worst performers
+        const sortedByPerformance = [...portfolio].sort((a, b) => b.profitLossPercent - a.profitLossPercent);
+        const bestPerformer = sortedByPerformance[0];
+        const worstPerformer = sortedByPerformance[sortedByPerformance.length - 1];
+        const bestStock = allStocks.find(s => s.id === bestPerformer?.stockId);
+        const worstStock = allStocks.find(s => s.id === worstPerformer?.stockId);
+
+        if (bestPerformer && bestStock && bestPerformer.profitLossPercent > 5) {
+          aiRecommendations.push({
+            type: 'buy',
+            symbol: bestStock.symbol,
+            action: `Consider adding more ${bestStock.symbol} shares`,
+            reasoning: `Strong performer with ${bestPerformer.profitLossPercent.toFixed(2)}% gain`,
+            priority: 'medium',
+            impact: 7,
+          });
+        }
+
+        if (worstPerformer && worstStock && worstPerformer.profitLossPercent < -5) {
+          aiRecommendations.push({
+            type: 'sell',
+            symbol: worstStock.symbol,
+            action: `Consider reducing ${worstStock.symbol} position`,
+            reasoning: `Underperforming with ${worstPerformer.profitLossPercent.toFixed(2)}% loss`,
+            priority: 'high',
+            impact: 6,
+          });
+        }
+
+        if (maxAllocation > 50) {
+          aiRecommendations.push({
+            type: 'rebalance',
+            symbol: 'PORTFOLIO',
+            action: 'Rebalance sector allocation',
+            reasoning: `Highest sector allocation is ${maxAllocation.toFixed(1)}% - diversify risk`,
+            priority: 'high',
+            impact: 8,
+          });
+        }
+      }
 
       return {
         userId,
-        overallScore,
-        riskAssessment,
-        diversification,
-        performance,
-        recommendations,
+        overallScore: Math.round(overallScore),
+        riskAssessment: {
+          level: riskLevel,
+          score: Math.round(riskScore),
+          factors: [
+            maxAllocation > 50 ? 'High concentration in single sector' : 'Well-diversified',
+            numSectors < 3 ? 'Limited sector diversification' : 'Good sector spread',
+            totalGainPercent > 0 ? 'Positive performance' : 'Negative performance',
+          ],
+        },
+        diversification: {
+          score: Math.round(diversificationScore),
+          sectors,
+          recommendations: [
+            maxAllocation > 50 ? 'Reduce concentration in largest sector' : 'Maintain current diversification',
+            numSectors < 3 ? 'Consider adding stocks from other sectors' : 'Good sector coverage',
+            ...sectors.filter(s => s.recommendation === 'underweight' && s.performance < -5).map(s => `Reduce ${s.sector} exposure`),
+          ],
+        },
+        performance: {
+          score: Math.round(performanceScore),
+          vsBenchmark: Math.round(totalGainPercent * 10) / 10,
+          trends: [
+            totalGainPercent > 5 ? 'Strong outperformance' : totalGainPercent > 0 ? 'Positive returns' : 'Underperformance',
+            portfolio.length > 5 ? 'Well-diversified holdings' : 'Focused portfolio',
+            maxAllocation < 40 ? 'Balanced allocation' : 'Concentrated positions',
+          ],
+        },
+        recommendations: aiRecommendations,
         createdAt: new Date(),
       };
     } catch (error) {
@@ -796,6 +1011,33 @@ export class AIService {
         createdAt: new Date(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
+
+      if (OPENAI_API_KEY) {
+        const llmPrompt = [
+          'Generate one personalized trading strategy idea for a Ghanaian investor.',
+          'Consider mobile-money funding, local equities, and optional crypto exposure.',
+          'Return 3 actionable steps and highlight risk.',
+        ].join(' ');
+        const llmRecommendation = await this.callOpenAI(llmPrompt, { model: this.config.models.predictions, maxTokens: 350 });
+        if (llmRecommendation) {
+          recommendations.push({
+            id: `rec_ai_${Date.now()}`,
+            userId,
+            type: 'strategy',
+            title: 'AI Trader Strategy',
+            description: llmRecommendation,
+            priority: 'medium',
+            category: 'AI Trader',
+            actionItems: ['Review AI plan', 'Allocate pilot capital', 'Track performance vs. benchmark'],
+            resources: ['AI Insights Hub'],
+            estimatedImpact: 7.5,
+            timeToImplement: 'Immediate',
+            isPersonalized: true,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          });
+        }
+      }
 
       return recommendations;
     } catch (error) {
